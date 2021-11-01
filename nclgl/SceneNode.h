@@ -16,18 +16,18 @@ public:
 	Matrix4 GetWorldTransform()				const	{ return worldTransform; }
 
 	Vector4 GetColour()						const	{ return colour; }
-	void SetColour(Vector4 c) { colour = c; }
+	void SetColour(Vector4 c)						{ colour = c; }
 
 	Vector3 GetModelScale()					const	{ return modelScale; }
 	void SetModelScale(Vector3 s)					{ modelScale = s; }
 
 	Mesh* GetMesh()							const	{ return mesh; }
-	void SetMesh(Mesh* m) { mesh = m; }
+	void SetMesh(Mesh* m)							{ mesh = m; }
 
 	void AddChild(SceneNode* s);
 
 	virtual void Update(float dt);
-	virtual void Draw(const OGLRenderer& r);
+	virtual void Draw(const OGLRenderer &r);
 
 	std::vector<SceneNode*>::const_iterator GetChildIteratorStart() {
 		return children.begin();

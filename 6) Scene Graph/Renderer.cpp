@@ -1,8 +1,8 @@
 #include "Renderer.h"
 
-Renderer::Renderer(Window& parent) :OGLRenderer(parent) {
+Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	cube = Mesh::LoadFromMeshFile("OffsetCubeY.msh");
-	camera = new Camera;
+	camera = new Camera();
 	shader = new Shader("SceneVertex.glsl", "SceneFragment.glsl");
 	if (!shader->LoadSuccess()) {
 		return;
@@ -13,7 +13,12 @@ Renderer::Renderer(Window& parent) :OGLRenderer(parent) {
 	camera->SetPosition(Vector3(0, 30, 175));
 
 	root = new SceneNode();
-	root->AddChild(new CubeRobot(cube));
+	for (int i = 0; i < 10; i++) {
+		CubeRobot* c = new CubeRobot(cube);
+		c->SetTransfom(Matrix4::Translation(Vector3(i*100, 0, 0)));
+		root->AddChild(c);
+
+	}
 
 	glEnable(GL_DEPTH_TEST);
 	init = true;
@@ -54,7 +59,7 @@ void Renderer::DrawNode(SceneNode* n) {
 		n->Draw(*this);
 	}
 
-	for (vector<SceneNode*>::const_iterator i = n->GetChildIteratorEnd(); i != n->GetChildIteratorEnd(); ++i) {
+	for (vector<SceneNode*>::const_iterator i = n->GetChildIteratorStart(); i != n->GetChildIteratorEnd(); ++i) {
 		DrawNode(*i);
 	}
 }
