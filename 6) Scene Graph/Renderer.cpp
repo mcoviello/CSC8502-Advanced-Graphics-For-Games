@@ -15,7 +15,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	root = new SceneNode();
 	for (int i = 0; i < 10; i++) {
 		CubeRobot* c = new CubeRobot(cube);
-		c->SetTransfom(Matrix4::Translation(Vector3(i*100, 0, 0)));
+		c->SetTransform(Matrix4::Translation(Vector3(i*100, 0, 0)));
 		root->AddChild(c);
 
 	}
