@@ -45,5 +45,8 @@ void Renderer::RenderScene() {
 	BindShader(shader);
 	UpdateShaderMatrices();
 
-	glUniform1i(glGetUniformLocation())
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "diffuseTex"), 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, terrainTex);
+	heightMap->Draw();
 }
