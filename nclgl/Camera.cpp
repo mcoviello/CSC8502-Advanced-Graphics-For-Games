@@ -2,6 +2,8 @@
 #include "Window.h"
 #include <algorithm>
 
+const float MOVE_SPEED = 200.0f;
+
 void Camera::UpdateCamera(float dt) {
 	pitch -= (Window::GetMouse()->GetRelativePosition().y);
 	yaw -= (Window::GetMouse()->GetRelativePosition().x);
@@ -20,7 +22,7 @@ void Camera::UpdateCamera(float dt) {
 	Vector3 forward = rotation * Vector3(0, 0, -1);
 	Vector3 right = rotation * Vector3(1, 0, 0);
 
-	float speed = 30.0f * dt;
+	float speed = MOVE_SPEED * dt;
 
 	if (Window::GetKeyboard()->KeyDown(KEYBOARD_W)) {
 		position += forward * speed;

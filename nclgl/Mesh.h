@@ -55,6 +55,10 @@ public:
 	void Draw();
 	void DrawSubMesh(int i);
 
+	void GenerateNormals();
+	bool GetVertexIndicesForTri(unsigned int triangleIndex, unsigned int& a,
+		unsigned int& b, unsigned int& c) const;
+
 	static Mesh* LoadFromMeshFile(const std::string& name);
 
 	unsigned int GetTriCount() const {
@@ -87,6 +91,8 @@ public:
 	bool GetSubMesh(const std::string& name, const SubMesh* s) const;
 
 protected:
+	void	GenerateTangents();
+	Vector4 GenerateTangent(int a, int b, int c);
 	void	BufferData();
 
 	GLuint	arrayObject;
