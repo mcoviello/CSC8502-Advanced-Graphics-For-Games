@@ -46,8 +46,7 @@ protected:
 
 	GLuint earthTex;
 	GLuint earthBump;
-	GLuint grassTex;
-	GLuint grassBump;
+	GLuint grassMap;
 	GLuint seabedTex;
 	GLuint seabedBump;
 

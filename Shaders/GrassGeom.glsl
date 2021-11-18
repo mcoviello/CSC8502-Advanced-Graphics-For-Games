@@ -10,6 +10,7 @@ in  Vertex {
     vec3 normal;
     vec3 tangent;
     vec3 binormal;
+    float grassMapHeight;
     } IN[];
     
 out  Vertex {
@@ -31,12 +32,16 @@ void  main() {
         vec4 baseColour = vec4(0.15, 1, 0.45, 1);
 
     for(int i = 0; i < gl_in.length(); ++i) {
+        if(IN[i].grassMapHeight == 0.0)
+            continue;
+
         OUT.normal      = IN[i].normal;
         OUT.tangent      = IN[i].tangent;
         OUT.binormal      = IN[i].binormal;
 
         //Get random blade height
         float height = 50 + (((rand(gl_in[i].gl_Position.xz))) * 100);
+        height *= IN[i].grassMapHeight;
 
         //Calculate a 'random' rotation for the grass based off its xz world position.
         //Create the grass geometry along this rotation axis

@@ -20,8 +20,13 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		TEXTUREDIR"Barren RedsDOT3.JPG", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
+	grassMap = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/GrassMap.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
 	SetTextureRepeating(earthTex, true);
 	SetTextureRepeating(earthBump, true);
+	SetTextureRepeating(grassMap, true);
 
 	Vector3 heightMapSize = heightMap->GetHeightmapSize();
 	camera = new Camera(-45.0f, 0.0f, Vector3(3100.0f, 310.0f, 1200.0f));
@@ -237,8 +242,17 @@ void Renderer::DrawGrass() {
 
 	UpdateShaderMatrices();
 
+	glUniform1i(
+		glGetUniformLocation(grassShader->GetProgram(), "grassMap"), 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, grassMap);
+
 	glUniform1f(glGetUniformLocation(
 		grassShader->GetProgram(), "time"),time->GetTotalTimeMSec());
+
+	glUniform1i(glGetUniformLocation(
+		grassShader->GetProgram(), "mapScale"), 32);
 
 	heightMap->Draw();
 	glEnable(GL_CULL_FACE);
