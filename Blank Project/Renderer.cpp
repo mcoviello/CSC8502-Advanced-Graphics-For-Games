@@ -2,10 +2,12 @@
 #include "../nclgl/HeightMap.h"
 #include "../nclgl/Camera.h"
 #include "../nclgl/Light.h"
+#include <chrono>
 const int LIGHT_NUM = 1;
 const int MAX_HEIGHT = 500;
 
 Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
+	time = new GameTimer();
 	sphere = Mesh::LoadFromMeshFile("Sphere.msh");
 	quad = Mesh::GenerateQuad();
 	heightMap = new HeightMap(TEXTUREDIR"Coursework/Heightmap.png");
@@ -234,6 +236,10 @@ void Renderer::DrawGrass() {
 		(float)width / (float)height, 45.0f);
 
 	UpdateShaderMatrices();
+
+	glUniform1f(glGetUniformLocation(
+		grassShader->GetProgram(), "time"),time->GetTotalTimeMSec());
+
 	heightMap->Draw();
 	glEnable(GL_CULL_FACE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

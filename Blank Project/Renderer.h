@@ -51,5 +51,6 @@ protected:
 	GLuint seabedTex;
 	GLuint seabedBump;
 
+	GameTimer* time;
 };
 
