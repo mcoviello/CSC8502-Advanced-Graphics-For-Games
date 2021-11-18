@@ -35,7 +35,8 @@ void  main() {
         OUT.tangent      = IN[i].tangent;
         OUT.binormal      = IN[i].binormal;
 
-        float height = 70 + (((rand(gl_in[i].gl_Position.xz)) - 0.5) * 40);
+        //Get random blade height
+        float height = 50 + (((rand(gl_in[i].gl_Position.xz))) * 100);
 
         //Calculate a 'random' rotation for the grass based off its xz world position.
         //Create the grass geometry along this rotation axis
@@ -43,7 +44,8 @@ void  main() {
         vec3 bladeAxis = normalize((IN[i].binormal * randomRot) + (IN[i].tangent * (1-randomRot)));
 
         //Calculate wind strength for blade of grass using two offset sin waves
-        vec4 windStrength = vec4(-IN[i].tangent,0) * (((sin(time * 0.003)+1)/2) + (sin(time * 0.0007)));
+        //Use X position to simulate "waves" of wind
+        vec4 windStrength = vec4(-IN[i].tangent,0) * (((sin(time * 0.003 + (gl_in[i].gl_Position.x/300))+1)/2) + (sin(time * 0.0007)));
 
         // -- Draw Grass Blade --//
         //TODO: Make this dynamic, with an adjustable height (and segment count?)
@@ -62,21 +64,21 @@ void  main() {
         gl_Position = gl_in[i].gl_Position;
         gl_Position += vec4(bladeAxis,0) * 5;
         gl_Position += vec4(IN[i].normal,0) * height / 2;
-        gl_Position += windStrength * 3;
+        gl_Position += (windStrength* height / 70) * 3;
         gl_Position = (projMatrix * viewMatrix) * gl_Position;
         EmitVertex();
 
         gl_Position = gl_in[i].gl_Position;
         gl_Position -= vec4(bladeAxis,0) * 2;
         gl_Position += vec4(IN[i].normal,0) * height / 3;
-        gl_Position += windStrength * 5; 
+        gl_Position += (windStrength* height / 70) * 5; 
         gl_Position = (projMatrix * viewMatrix) * gl_Position;
         EmitVertex();
 
         gl_Position = gl_in[i].gl_Position;
         gl_Position -= vec4(bladeAxis,0) * 7;
         gl_Position += vec4(IN[i].normal,0) * height;
-        gl_Position += windStrength * 25; 
+        gl_Position += (windStrength * height / 70) * 25; 
         OUT.colour = tipColour;
         gl_Position = (projMatrix * viewMatrix) * gl_Position;
         EmitVertex();
