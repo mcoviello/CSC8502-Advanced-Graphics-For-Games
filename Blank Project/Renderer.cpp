@@ -22,7 +22,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	SetTextureRepeating(earthBump, true);
 
 	Vector3 heightMapSize = heightMap->GetHeightmapSize();
-	camera = new Camera(-45.0f, 0.0f, Vector3(2200.0f, 3200.0f, -855.0f));
+	camera = new Camera(-45.0f, 0.0f, Vector3(3100.0f, 310.0f, 1200.0f));
 
 	pointLights = new Light[LIGHT_NUM];
 
@@ -227,16 +227,6 @@ void Renderer::DrawGrass() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glDisable(GL_CULL_FACE);
 	BindShader(grassShader);
-	glUniform1i(
-		glGetUniformLocation(grassShader->GetProgram(), "diffuseTex"), 0);
-	glUniform1i(
-		glGetUniformLocation(grassShader->GetProgram(), "bumpTex"), 1);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, earthTex);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, earthBump);
 
 	modelMatrix.ToIdentity();
 	viewMatrix = camera->BuildViewMatrix();
