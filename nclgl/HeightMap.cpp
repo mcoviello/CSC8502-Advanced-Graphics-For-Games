@@ -1,4 +1,5 @@
 #include "HeightMap.h"
+const float Y_SCALE = 3.5;
 HeightMap::HeightMap(const std::string& name) {
 	int iWidth, iHeight, iChans;
 	unsigned char* data = SOIL_load_image(name.c_str(), &iWidth, &iHeight, &iChans, 1);
@@ -18,7 +19,7 @@ HeightMap::HeightMap(const std::string& name) {
 	for (int z = 0; z < iHeight; z++) {
 		for (int x = 0; x < iWidth; x++) {
 			int offset = (z * iWidth) + x;
-			vertices[offset] = Vector3(x, data[offset]*2, z) * vertexScale;
+			vertices[offset] = Vector3(x, data[offset] * Y_SCALE, z) * vertexScale;
 			textureCoords[offset] = Vector2(x, z) * textureScale;
 		}
 	}

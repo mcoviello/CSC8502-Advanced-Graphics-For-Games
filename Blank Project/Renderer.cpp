@@ -34,6 +34,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	sceneShader = new Shader("BumpVertex.glsl", "bufferFragment.glsl");
 	pointLightShader = new Shader("pointlightvert.glsl", "pointlightfrag.glsl");
 	combineShader = new Shader("combineVert.glsl", "combineFrag.glsl");
+	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl");
 
 	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess())
 		return;
@@ -84,7 +85,7 @@ Renderer ::~Renderer(void) {
 	delete        camera;
 	delete        sphere;
 	delete        quad;
-	delete[]     pointLights;
+	delete[]	pointLights;
 	glDeleteTextures(1, &bufferColourTex);
 	glDeleteTextures(1, &bufferNormalTex);
 	glDeleteTextures(1, &bufferDepthTex);
@@ -118,6 +119,7 @@ void Renderer::UpdateScene(float dt) {
 void Renderer::RenderScene() {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	FillBuffers();
+	DrawGrass();
 	DrawPointLights();
 	CombineBuffers();
 }
@@ -207,7 +209,7 @@ void Renderer::CombineBuffers() {
 		combineShader->GetProgram(), "diffuseTex"), 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, bufferColourTex);
-
+	
 	glUniform1i(glGetUniformLocation(
 		combineShader->GetProgram(), "diffuseLight"), 1);
 	glActiveTexture(GL_TEXTURE1);
@@ -219,4 +221,30 @@ void Renderer::CombineBuffers() {
 	glBindTexture(GL_TEXTURE_2D, lightSpecularTex);
 
 	quad->Draw();
+}
+
+void Renderer::DrawGrass() {
+	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
+	glDisable(GL_CULL_FACE);
+	BindShader(grassShader);
+	glUniform1i(
+		glGetUniformLocation(grassShader->GetProgram(), "diffuseTex"), 0);
+	glUniform1i(
+		glGetUniformLocation(grassShader->GetProgram(), "bumpTex"), 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, earthTex);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, earthBump);
+
+	modelMatrix.ToIdentity();
+	viewMatrix = camera->BuildViewMatrix();
+	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
+		(float)width / (float)height, 45.0f);
+
+	UpdateShaderMatrices();
+	heightMap->Draw();
+	glEnable(GL_CULL_FACE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

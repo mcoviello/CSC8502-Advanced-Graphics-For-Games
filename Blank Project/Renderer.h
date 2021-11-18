@@ -4,6 +4,7 @@
 class Camera;
 class Mesh;
 class HeightMap;
+class SceneNode;
 
 class Renderer : public OGLRenderer
 {
@@ -17,12 +18,16 @@ protected:
 	void FillBuffers();
 	void DrawPointLights();
 	void CombineBuffers();
+	void DrawGrass();
 
 	void GenerateScreenTexture(GLuint& into, bool depth = false);
+
+	SceneNode* root;
 
 	Shader* sceneShader;
 	Shader* pointLightShader;
 	Shader* combineShader;
+	Shader* grassShader;
 
 	GLuint bufferFBO;
 	GLuint bufferColourTex;
@@ -38,8 +43,13 @@ protected:
 	Mesh* sphere;
 	Mesh* quad;
 	Camera* camera;
+
 	GLuint earthTex;
 	GLuint earthBump;
+	GLuint grassTex;
+	GLuint grassBump;
+	GLuint seabedTex;
+	GLuint seabedBump;
 
 };
 
