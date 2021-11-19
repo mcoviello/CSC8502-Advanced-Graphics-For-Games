@@ -1,5 +1,4 @@
 #include "HeightMap.h"
-const float Y_SCALE = 3.5;
 HeightMap::HeightMap(const std::string& name) {
 	int iWidth, iHeight, iChans;
 	unsigned char* data = SOIL_load_image(name.c_str(), &iWidth, &iHeight, &iChans, 1);
@@ -13,13 +12,13 @@ HeightMap::HeightMap(const std::string& name) {
 	textureCoords = new Vector2[numVertices];
 	indices = new GLuint[numIndices];
 
-	Vector3 vertexScale = Vector3(16.0f, 1.0f, 16.0f);
+	Vector3 vertexScale = Vector3(16.0f, 3.5f, 16.0f);
 	Vector2 textureScale = Vector2(1 / 16.0f, 1 / 16.0f);
 
 	for (int z = 0; z < iHeight; z++) {
 		for (int x = 0; x < iWidth; x++) {
 			int offset = (z * iWidth) + x;
-			vertices[offset] = Vector3(x, data[offset] * Y_SCALE, z) * vertexScale;
+			vertices[offset] = Vector3(x, data[offset], z) * vertexScale;
 			textureCoords[offset] = Vector2(x, z) * textureScale;
 		}
 	}
@@ -50,4 +49,11 @@ HeightMap::HeightMap(const std::string& name) {
 	heightmapSize.x = vertexScale.x * (iWidth - 1);
 	heightmapSize.y = vertexScale.y * 255.0f;//each  height  is a byte!
 	heightmapSize.z = vertexScale.z * (iHeight  - 1);
+}
+
+void HeightMap::DrawType(GLuint type) {
+	auto temp = Mesh::type;
+	Mesh::type = type;
+	Draw();
+	Mesh::type = temp;
 }

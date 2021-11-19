@@ -41,7 +41,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	sceneShader = new Shader("BumpVertex.glsl", "bufferFragment.glsl");
 	pointLightShader = new Shader("pointlightvert.glsl", "pointlightfrag.glsl");
 	combineShader = new Shader("combineVert.glsl", "combineFrag.glsl");
-	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl");
+	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl", "GrassTessControl.glsl", "GrassTessEval.glsl");
 
 	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess())
 		return;
@@ -234,7 +234,6 @@ void Renderer::DrawGrass() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glDisable(GL_CULL_FACE);
 	BindShader(grassShader);
-
 	modelMatrix.ToIdentity();
 	viewMatrix = camera->BuildViewMatrix();
 	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
@@ -252,9 +251,13 @@ void Renderer::DrawGrass() {
 		grassShader->GetProgram(), "time"),time->GetTotalTimeMSec());
 
 	glUniform1i(glGetUniformLocation(
+		grassShader->GetProgram(), "tessAmount"), 2);
+
+	glUniform1i(glGetUniformLocation(
 		grassShader->GetProgram(), "mapScale"), 32);
 
-	heightMap->Draw();
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
+	heightMap->DrawType(GL_PATCHES);
 	glEnable(GL_CULL_FACE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
