@@ -1,5 +1,6 @@
 #pragma once
 #include "../nclgl/OGLRenderer.h"
+#include <vector>
 class Camera;
 class Shader;
 class HeightMap;

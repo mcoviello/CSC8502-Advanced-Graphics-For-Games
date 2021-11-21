@@ -24,17 +24,30 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		TEXTUREDIR"Coursework/GrassMap.png", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
+	cubeMap = SOIL_load_OGL_cubemap(
+		TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg",
+		TEXTUREDIR"rusted_up.jpg", TEXTUREDIR"rusted_down.jpg",
+		TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg",
+		SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+
 	SetTextureRepeating(earthTex, true);
 	SetTextureRepeating(earthBump, true);
 	SetTextureRepeating(grassMap, true);
 
 	Vector3 heightMapSize = heightMap->GetHeightmapSize();
-	camera = new Camera(-45.0f, 0.0f, Vector3(3100.0f, 310.0f, 1200.0f));
+
+	//Camera Movement Track Positions
+	curCamTrackPos = 0;
+	cameraTrack.push_back(CameraTrackPos{ Vector3(3053.0f, 1260.0f, 770.0f), -180.0f, 0.0f });
+	cameraTrack.push_back(CameraTrackPos{ Vector3(3238.0f, 674.0f, 1776.0f), -180.0f, 0.0f });
+	cameraTrack.push_back(CameraTrackPos{ Vector3(3900.0f, 674.0f, 4629.0f), -180.0f, 0.0f });
+
+	camera = new Camera(cameraTrack[0].pitch, cameraTrack[0].yaw, cameraTrack[0].position);
 
 	pointLights = new Light[LIGHT_NUM];
 
 	Light& l = pointLights[0];
-	l.SetPosition(Vector3(heightMapSize.x/2, 1000.0f,1000));
+	l.SetPosition(Vector3(4000, 2000.0f, heightMapSize.z / 2));
 	l.SetColour(Vector4(0.95f, 0.8f, 0.7, 1));
 	l.SetRadius(5000.0f);
 
@@ -42,6 +55,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	pointLightShader = new Shader("pointlightvert.glsl", "pointlightfrag.glsl");
 	combineShader = new Shader("combineVert.glsl", "combineFrag.glsl");
 	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl", "GrassTessControl.glsl", "GrassTessEval.glsl");
+	skyboxShader = new Shader("skyboxVertex.glsl", "skyboxFragment.glsl");
 
 	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess())
 		return;
@@ -120,20 +134,55 @@ void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
 }
 
 void Renderer::UpdateScene(float dt) {
-	camera->UpdateCamera(dt);
+	if (freeCam) {
+		camera->UpdateCamera(dt);
+	}
+	else {
+		if (Vector3::Distance(camera->GetPosition(), cameraTrack[curCamTrackPos].position) < 10.0f) {
+			curCamTrackPos = (curCamTrackPos + 1) % cameraTrack.size();
+		}
+		else {
+			camera->SetPosition(camera->GetPosition() + (cameraTrack[curCamTrackPos].position - camera->GetPosition()).Normalised() * 5);
+			//TODO: Add pitch and yaw automation
+		}
+	}
+
+}
+
+void Renderer::ToggleFreecam() {
+	freeCam = !freeCam;
 }
 
 void Renderer::RenderScene() {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+	modelMatrix.ToIdentity();
+	viewMatrix = camera->BuildViewMatrix();
+	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
+		(float)width / (float)height, 45.0f);
+	UpdateShaderMatrices();
+
+	DrawSkybox();
 	FillBuffers();
 	DrawGrass();
 	DrawPointLights();
 	CombineBuffers();
 }
 
-void Renderer::FillBuffers() {
+void Renderer::DrawSkybox() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glDepthMask(GL_FALSE);
+
+	BindShader(skyboxShader);
+	UpdateShaderMatrices();
+
+	quad->Draw();
+	glDepthMask(GL_TRUE);
+}
+
+void Renderer::FillBuffers() {
+	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 
 	BindShader(sceneShader);
 	glUniform1i(
@@ -147,14 +196,9 @@ void Renderer::FillBuffers() {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, earthBump);
 
-	modelMatrix.ToIdentity();
-	viewMatrix = camera->BuildViewMatrix();
-	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
-		(float)width / (float)height, 45.0f);
-
 	UpdateShaderMatrices();
+
 	heightMap->Draw();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::DrawPointLights() {
@@ -201,11 +245,10 @@ void Renderer::DrawPointLights() {
 	glDepthMask(GL_TRUE);
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::CombineBuffers() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	BindShader(combineShader);
 	modelMatrix.ToIdentity();
 	viewMatrix.ToIdentity();
@@ -234,11 +277,6 @@ void Renderer::DrawGrass() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glDisable(GL_CULL_FACE);
 	BindShader(grassShader);
-	modelMatrix.ToIdentity();
-	viewMatrix = camera->BuildViewMatrix();
-	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
-		(float)width / (float)height, 45.0f);
-
 	UpdateShaderMatrices();
 
 	glUniform1i(
@@ -259,5 +297,4 @@ void Renderer::DrawGrass() {
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 	heightMap->DrawType(GL_PATCHES);
 	glEnable(GL_CULL_FACE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

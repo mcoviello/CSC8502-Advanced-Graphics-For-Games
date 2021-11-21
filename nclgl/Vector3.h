@@ -38,6 +38,14 @@ public:
 		return n;
 	}
 
+	static float Distance(Vector3 v1, Vector3 v2) {
+		float xDiff = (v1.x - v2.x);
+		float yDiff = (v1.y - v2.y);
+		float zDiff = (v1.z - v2.z);
+
+		return sqrt((xDiff * xDiff) + (yDiff * yDiff) + (zDiff * zDiff));
+	}
+
 	void			Normalise() {
 		float length = Length();
 

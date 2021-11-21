@@ -1,10 +1,16 @@
 #pragma once
 #include "../nclgl/OGLRenderer.h"
-
+#include <Vector>
 class Camera;
 class Mesh;
 class HeightMap;
 class SceneNode;
+
+struct CameraTrackPos {
+	Vector3 position;
+	float pitch;
+	float yaw;
+};
 
 class Renderer : public OGLRenderer
 {
@@ -14,7 +20,9 @@ public:
 
 	void RenderScene() override;
 	void UpdateScene(float dt) override;
+	void ToggleFreecam();
 protected:
+	void DrawSkybox();
 	void FillBuffers();
 	void DrawPointLights();
 	void CombineBuffers();
@@ -28,6 +36,7 @@ protected:
 	Shader* pointLightShader;
 	Shader* combineShader;
 	Shader* grassShader;
+	Shader* skyboxShader;
 
 	GLuint bufferFBO;
 	GLuint bufferColourTex;
@@ -44,12 +53,15 @@ protected:
 	Mesh* quad;
 	Camera* camera;
 
+	GLuint cubeMap;
 	GLuint earthTex;
 	GLuint earthBump;
 	GLuint grassMap;
-	GLuint seabedTex;
-	GLuint seabedBump;
 
 	GameTimer* time;
+
+	bool freeCam = false;
+	std::vector<CameraTrackPos> cameraTrack;
+	int curCamTrackPos;
 };
 
