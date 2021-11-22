@@ -2,6 +2,8 @@
 #include "../nclgl/HeightMap.h"
 #include "../nclgl/Camera.h"
 #include "../nclgl/Light.h"
+#include "../nclgl/SceneNode.h"
+#include "../nclgl/Frustum.h"
 #include <chrono>
 const int LIGHT_NUM = 1;
 const int MAX_HEIGHT = 500;
@@ -11,7 +13,12 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	sphere = Mesh::LoadFromMeshFile("Sphere.msh");
 	quad = Mesh::GenerateQuad();
 	heightMap = new HeightMap(TEXTUREDIR"Coursework/Heightmap.png");
+	root = new SceneNode();
+	SceneNode* hmNode = new SceneNode(heightMap);
 
+	
+
+	//Initialise Textures
 	earthTex = SOIL_load_OGL_texture(
 		TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
@@ -34,6 +41,8 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	SetTextureRepeating(earthBump, true);
 	SetTextureRepeating(grassMap, true);
 
+	hmNode->SetTexture(earthTex);
+
 	Vector3 heightMapSize = heightMap->GetHeightmapSize();
 
 	//Camera Movement Track Positions
@@ -48,7 +57,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	Light& l = pointLights[0];
 	l.SetPosition(Vector3(4000, 2000.0f, heightMapSize.z / 2));
-	l.SetColour(Vector4(0.95f, 0.8f, 0.7, 1));
+	l.SetColour(Vector4(0.95f, 0.9f, 0.85f, 1));
 	l.SetRadius(5000.0f);
 
 	sceneShader = new Shader("BumpVertex.glsl", "bufferFragment.glsl");
@@ -98,9 +107,11 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 }
 
 Renderer ::~Renderer(void) {
-	delete        sceneShader;
-	delete        combineShader;
-	delete        pointLightShader;
+	delete			sceneShader;
+	delete			pointLightShader;
+	delete			combineShader;
+	delete			grassShader;
+	delete			skyboxShader;
 
 	delete        heightMap;
 	delete        camera;
@@ -149,6 +160,56 @@ void Renderer::UpdateScene(float dt) {
 
 }
 
+void Renderer::BuildNodeLists(SceneNode* from) {
+	if (frameFrustum.InsideFrustum(*from)) {
+		Vector3 dir = from->GetWorldTransform().GetPositionVector() = camera->GetPosition();
+		from->SetCameraDistance(Vector3::Dot(dir, dir));
+
+		if (from->GetColour().w < 1.0f) {
+			transparentNodeList.push_back(from);
+		}
+		else {
+			nodeList.push_back(from);
+		}
+	}
+
+	for (vector<SceneNode*>::const_iterator i = from->GetChildIteratorStart(); i != from->GetChildIteratorEnd(); i++) {
+		BuildNodeLists((*i));
+	}
+}
+
+void Renderer::SortNodeLists() {
+	std::sort(transparentNodeList.rbegin(), transparentNodeList.rend(), SceneNode::CompareByCameraDistance);
+	std::sort(nodeList.begin(), nodeList.end(), SceneNode::CompareByCameraDistance);
+
+}
+
+void Renderer::DrawNodes() {
+	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
+	for (const auto& i : nodeList) {
+		DrawNode(i);
+	}
+	for (const auto& i : transparentNodeList) {
+		DrawNode(i);
+	}
+}
+
+void Renderer::DrawNode(SceneNode* n) {
+	if (n->GetMesh()) {
+		Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
+		Shader* nodeShader = n->GetShader();
+		glUniformMatrix4fv(glGetUniformLocation(nodeShader->GetProgram(), "modelMatrix"), 1, false, model.values);
+		glUniform4fv(glGetUniformLocation(nodeShader->GetProgram(), "nodeColour"), 1, (float*)&n->GetColour());
+
+		GLuint texture = n->GetTexture();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE0, texture);
+
+		glUniform1i(glGetUniformLocation(nodeShader->GetProgram(), "useTexture"), texture);
+		n->Draw(*this);
+	}
+}
+
 void Renderer::ToggleFreecam() {
 	freeCam = !freeCam;
 }
@@ -164,6 +225,7 @@ void Renderer::RenderScene() {
 
 	DrawSkybox();
 	FillBuffers();
+	//DrawNodes();
 	DrawGrass();
 	DrawPointLights();
 	CombineBuffers();
@@ -185,10 +247,8 @@ void Renderer::FillBuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 
 	BindShader(sceneShader);
-	glUniform1i(
-		glGetUniformLocation(sceneShader->GetProgram(), "diffuseTex"), 0);
-	glUniform1i(
-		glGetUniformLocation(sceneShader->GetProgram(), "bumpTex"), 1);
+	glUniform1i(glGetUniformLocation(sceneShader->GetProgram(), "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(sceneShader->GetProgram(), "bumpTex"), 1);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, earthTex);
@@ -212,25 +272,20 @@ void Renderer::DrawPointLights() {
 	glDepthFunc(GL_ALWAYS);
 	glDepthMask(GL_FALSE);
 
-	glUniform1i(glGetUniformLocation(
-		pointLightShader->GetProgram(), "depthTex"), 0);
+	glUniform1i(glGetUniformLocation(pointLightShader->GetProgram(), "depthTex"), 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, bufferDepthTex);
 
-	glUniform1i(glGetUniformLocation(
-		pointLightShader->GetProgram(), "normTex"), 1);
+	glUniform1i(glGetUniformLocation(pointLightShader->GetProgram(), "normTex"), 1);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, bufferNormalTex);
 
-	glUniform3fv(glGetUniformLocation(pointLightShader->GetProgram(),
-		"cameraPos"), 1, (float*)&camera->GetPosition());
+	glUniform3fv(glGetUniformLocation(pointLightShader->GetProgram(),"cameraPos"), 1, (float*)&camera->GetPosition());
 
-	glUniform2f(glGetUniformLocation(pointLightShader->GetProgram(),
-		"pixelSize"), 1.0f / width, 1.0f / height);
+	glUniform2f(glGetUniformLocation(pointLightShader->GetProgram(),"pixelSize"), 1.0f / width, 1.0f / height);
 
 	Matrix4 invViewProj = (projMatrix * viewMatrix).Inverse();
-	glUniformMatrix4fv(glGetUniformLocation(
-		pointLightShader->GetProgram(), "inverseProjView"), 1, false, invViewProj.values);
+	glUniformMatrix4fv(glGetUniformLocation(pointLightShader->GetProgram(), "inverseProjView"), 1, false, invViewProj.values);
 
 	UpdateShaderMatrices();
 	for (int i = 0; i < LIGHT_NUM; i++) {
@@ -255,18 +310,15 @@ void Renderer::CombineBuffers() {
 	projMatrix.ToIdentity();
 	UpdateShaderMatrices();
 
-	glUniform1i(glGetUniformLocation(
-		combineShader->GetProgram(), "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(combineShader->GetProgram(), "diffuseTex"), 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, bufferColourTex);
 	
-	glUniform1i(glGetUniformLocation(
-		combineShader->GetProgram(), "diffuseLight"), 1);
+	glUniform1i(glGetUniformLocation(combineShader->GetProgram(), "diffuseLight"), 1);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, lightDiffuseTex);
 
-	glUniform1i(glGetUniformLocation(
-		combineShader->GetProgram(), "specularLight"), 2);
+	glUniform1i(glGetUniformLocation(combineShader->GetProgram(), "specularLight"), 2);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, lightSpecularTex);
 
@@ -279,20 +331,16 @@ void Renderer::DrawGrass() {
 	BindShader(grassShader);
 	UpdateShaderMatrices();
 
-	glUniform1i(
-		glGetUniformLocation(grassShader->GetProgram(), "grassMap"), 0);
+	glUniform1i(glGetUniformLocation(grassShader->GetProgram(), "grassMap"), 0);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, grassMap);
 
-	glUniform1f(glGetUniformLocation(
-		grassShader->GetProgram(), "time"),time->GetTotalTimeMSec());
+	glUniform1f(glGetUniformLocation(grassShader->GetProgram(), "time"),time->GetTotalTimeMSec());
 
-	glUniform1i(glGetUniformLocation(
-		grassShader->GetProgram(), "tessAmount"), 2);
+	glUniform1i(glGetUniformLocation(grassShader->GetProgram(), "tessAmount"), 2);
 
-	glUniform1i(glGetUniformLocation(
-		grassShader->GetProgram(), "mapScale"), 32);
+	glUniform1i(glGetUniformLocation(grassShader->GetProgram(), "mapScale"), 32);
 
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 	heightMap->DrawType(GL_PATCHES);

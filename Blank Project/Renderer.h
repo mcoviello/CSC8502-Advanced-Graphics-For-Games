@@ -1,5 +1,6 @@
 #pragma once
 #include "../nclgl/OGLRenderer.h"
+#include "../nclgl/Frustum.h"
 #include <Vector>
 class Camera;
 class Mesh;
@@ -22,6 +23,12 @@ public:
 	void UpdateScene(float dt) override;
 	void ToggleFreecam();
 protected:
+	void BuildNodeLists(SceneNode* from);
+	void SortNodeLists();
+	void ClearNodeLists();
+	void DrawNodes();
+	void DrawNode(SceneNode* n);
+
 	void DrawSkybox();
 	void FillBuffers();
 	void DrawPointLights();
@@ -63,5 +70,9 @@ protected:
 	bool freeCam = false;
 	std::vector<CameraTrackPos> cameraTrack;
 	int curCamTrackPos;
+
+	vector<SceneNode*> transparentNodeList;
+	vector<SceneNode*> nodeList;
+	Frustum frameFrustum;
 };
 

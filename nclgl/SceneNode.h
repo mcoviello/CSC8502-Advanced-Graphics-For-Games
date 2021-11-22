@@ -3,6 +3,7 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Mesh.h"
+#include <map>
 #include <vector>
 
 class SceneNode
@@ -20,6 +21,9 @@ public:
 
 	Vector3 GetModelScale()					const	{ return modelScale; }
 	void SetModelScale(Vector3 s)					{ modelScale = s; }
+
+	Shader* GetShader()						const	{ return shader; }
+	void SetShader(Shader* s)						{ shader = s; }
 
 	Mesh* GetMesh()							const	{ return mesh; }
 	void SetMesh(Mesh* m)							{ mesh = m; }
@@ -54,6 +58,7 @@ public:
 protected:
 	SceneNode*					parent;
 	Mesh*						mesh;
+	Shader*						shader;
 	Matrix4						worldTransform;
 	Matrix4						transform;
 	Vector3						modelScale;

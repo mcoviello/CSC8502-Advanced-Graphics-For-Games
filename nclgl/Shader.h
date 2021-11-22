@@ -16,6 +16,7 @@ _-_-_-_-_-_-_-""  ""
 
 #pragma once
 #include "OGLRenderer.h"
+#include <map>
 
 enum ShaderStage {
 	SHADER_VERTEX,
@@ -50,6 +51,7 @@ protected:
 	void	GenerateShaderObject(unsigned int i);
 	void	SetDefaultAttributes();
 	void	LinkProgram();
+	void	UpdateUniforms();
 
 	GLuint	programID;
 	GLuint	objectIDs[SHADER_MAX];
@@ -59,5 +61,6 @@ protected:
 	std::string  shaderFiles[SHADER_MAX];
 
 	static std::vector<Shader*> allShaders;
+	std::map<std::string, float*> uniforms;
 };
 
