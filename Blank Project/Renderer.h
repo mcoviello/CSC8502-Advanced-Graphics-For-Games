@@ -67,7 +67,7 @@ protected:
 
 	GameTimer* time;
 
-	bool freeCam = false;
+	bool freeCam = true;
 	std::vector<CameraTrackPos> cameraTrack;
 	int curCamTrackPos;
 

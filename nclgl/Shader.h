@@ -17,6 +17,30 @@ _-_-_-_-_-_-_-""  ""
 #pragma once
 #include "OGLRenderer.h"
 #include <map>
+#include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
+#include "Matrix3.h"
+#include "Matrix4.h"
+
+union UniformValue
+{
+	int i;
+	float f;
+	Vector2 vec2;
+	Vector3 vec3;
+	Vector4 vec4;
+	Matrix3 mat3;
+	Matrix4 mat4;
+
+	UniformValue(int in) { i = in; }
+	UniformValue(float fl){ f = fl; }
+	UniformValue(Vector2 v2) { vec2 = v2; }
+	UniformValue(Vector3 v3) { vec3 = v3; }
+	UniformValue(Vector4 v4) { vec4 = v4; }
+	UniformValue(Matrix3 m3) { mat3 = m3; }
+	UniformValue(Matrix4 m4) { mat4 = m4; }
+};
 
 enum ShaderStage {
 	SHADER_VERTEX,
@@ -40,6 +64,9 @@ public:
 		return shaderValid[0] == GL_TRUE && programValid == GL_TRUE;
 	}
 
+	void		SetUniforms();
+	void		AddUniform(std::string s, UniformValue* v) { uniforms.insert(std::pair<std::string, UniformValue*>(s,v)); }
+
 	static void ReloadAllShaders();
 	static void	PrintCompileLog(GLuint object);
 	static void	PrintLinkLog(GLuint program);
@@ -51,7 +78,6 @@ protected:
 	void	GenerateShaderObject(unsigned int i);
 	void	SetDefaultAttributes();
 	void	LinkProgram();
-	void	UpdateUniforms();
 
 	GLuint	programID;
 	GLuint	objectIDs[SHADER_MAX];
@@ -61,6 +87,6 @@ protected:
 	std::string  shaderFiles[SHADER_MAX];
 
 	static std::vector<Shader*> allShaders;
-	std::map<std::string, float*> uniforms;
+	std::map<std::string, UniformValue*> uniforms;
 };
 

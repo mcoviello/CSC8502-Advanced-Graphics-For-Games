@@ -24,6 +24,7 @@ public:
 
 	Shader* GetShader()						const	{ return shader; }
 	void SetShader(Shader* s)						{ shader = s; }
+	void AddUniformToShader(std::string s, UniformValue* v) { shader->AddUniform(s, v); }
 
 	Mesh* GetMesh()							const	{ return mesh; }
 	void SetMesh(Mesh* m)							{ mesh = m; }
@@ -64,9 +65,9 @@ protected:
 	Vector3						modelScale;
 	Vector4						colour;
 	std::vector<SceneNode*>		children;
+	GLuint						texture;
 
 	float distanceFromCamera;
 	float boundingRadius;
-	GLuint texture;
 };
 

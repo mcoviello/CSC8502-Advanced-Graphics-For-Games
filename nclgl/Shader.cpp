@@ -33,6 +33,7 @@ Shader::Shader(const string& vertex, const string& fragment, const string& geome
 
 	Reload(false);
 	allShaders.emplace_back(this);
+	uniforms = std::map<std::string, UniformValue*>();
 }
 
 Shader::~Shader(void)	{
@@ -169,5 +170,39 @@ void	Shader::PrintLinkLog(GLuint program) {
 void Shader::ReloadAllShaders() {
 	for (auto& i : allShaders) {
 		i->Reload();
+	}
+}
+
+void Shader::SetUniforms() {
+	GLint i;
+	GLint count;
+	GLint size;
+	GLenum type;
+	const GLsizei maxNameLength = 16; // maximum name length
+	GLchar name[maxNameLength]; // variable name in GLSL
+	GLsizei nameLength; // name length
+
+
+	glGetProgramiv(GetProgram(), GL_ACTIVE_UNIFORMS, &count);
+	for (int i = 0; i < count; i++)
+	{
+		glGetActiveUniform(GetProgram(), (GLuint)i, maxNameLength, &nameLength, &size, &type, name);
+		switch (type) {
+		case GL_INT:
+			glUniform1i(glGetUniformLocation(GetProgram(), name), uniforms[name]->i);
+			break;
+		case GL_FLOAT:
+			glUniform1f(glGetUniformLocation(GetProgram(), name), uniforms[name]->f);
+		case GL_FLOAT_VEC2:
+			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec2));
+		case GL_FLOAT_VEC3:
+			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec3));
+		case GL_FLOAT_VEC4:
+			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec4));
+		case GL_FLOAT_MAT3:
+			glUniformMatrix3fv(glGetUniformLocation(GetProgram(), name), 1, false, uniforms[name]->mat3.values);
+		case GL_FLOAT_MAT4:
+			glUniformMatrix4fv(glGetUniformLocation(GetProgram(), name), 1, false, uniforms[name]->mat4.values);
+		}
 	}
 }

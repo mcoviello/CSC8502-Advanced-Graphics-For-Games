@@ -22,7 +22,7 @@ void SceneNode::AddChild(SceneNode* s) {
 }
 
 void SceneNode::Draw(const OGLRenderer& r) {
-	if (mesh) { 
+	if (mesh && shader) {
 		mesh->Draw(); 
 	}
 }

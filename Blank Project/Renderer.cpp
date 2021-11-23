@@ -16,8 +16,6 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	root = new SceneNode();
 	SceneNode* hmNode = new SceneNode(heightMap);
 
-	
-
 	//Initialise Textures
 	earthTex = SOIL_load_OGL_texture(
 		TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO,
@@ -42,6 +40,8 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	SetTextureRepeating(grassMap, true);
 
 	hmNode->SetTexture(earthTex);
+	hmNode->AddUniformToShader("diffuseTex",new UniformValue(0));
+	hmNode->AddUniformToShader("bumpTex", new UniformValue(1));
 
 	Vector3 heightMapSize = heightMap->GetHeightmapSize();
 
@@ -157,7 +157,6 @@ void Renderer::UpdateScene(float dt) {
 			//TODO: Add pitch and yaw automation
 		}
 	}
-
 }
 
 void Renderer::BuildNodeLists(SceneNode* from) {
@@ -195,17 +194,15 @@ void Renderer::DrawNodes() {
 }
 
 void Renderer::DrawNode(SceneNode* n) {
-	if (n->GetMesh()) {
+	if (n->GetMesh() && n->GetShader()) {
 		Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 		Shader* nodeShader = n->GetShader();
-		glUniformMatrix4fv(glGetUniformLocation(nodeShader->GetProgram(), "modelMatrix"), 1, false, model.values);
-		glUniform4fv(glGetUniformLocation(nodeShader->GetProgram(), "nodeColour"), 1, (float*)&n->GetColour());
+		nodeShader->SetUniforms();
 
 		GLuint texture = n->GetTexture();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE0, texture);
 
-		glUniform1i(glGetUniformLocation(nodeShader->GetProgram(), "useTexture"), texture);
 		n->Draw(*this);
 	}
 }
@@ -303,6 +300,7 @@ void Renderer::DrawPointLights() {
 }
 
 void Renderer::CombineBuffers() {
+	glEnable(GL_BLEND);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	BindShader(combineShader);
 	modelMatrix.ToIdentity();
@@ -323,6 +321,7 @@ void Renderer::CombineBuffers() {
 	glBindTexture(GL_TEXTURE_2D, lightSpecularTex);
 
 	quad->Draw();
+	glDisable(GL_BLEND);
 }
 
 void Renderer::DrawGrass() {

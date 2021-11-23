@@ -10,12 +10,17 @@ in Vertex{
 out vec4 fragColour;
 
 void main(void){
-    vec3 diffuse = texture(diffuseTex, IN.texCoord).xyz;
+    vec4 diffuse = texture(diffuseTex, IN.texCoord).rgba;
+    if(diffuse.a == -1){
+        fragColour.rgb = diffuse.xyz;
+        fragColour.a = 1;
+    } else {
     vec3 light = texture(diffuseLight, IN.texCoord).xyz;
     vec3 specular = texture(specularLight, IN.texCoord).xyz;
 
-    fragColour.xyz = diffuse * 0.1; //ambient
-    fragColour.xyz += diffuse * light;
-    fragColour.xyz += specular;
-    fragColour.a = 1.0;
+    fragColour.rgb = diffuse.xyz * 0.1; //ambient
+    fragColour.rgb += diffuse.xyz * light;
+    fragColour.rgb += specular;
+    fragColour.a = 1;
+    }
 }
