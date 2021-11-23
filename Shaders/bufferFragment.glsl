@@ -1,8 +1,10 @@
 #version 330 core
 
-uniform sampler2D diffuseTex;
-uniform sampler2D bumpTex;
-uniform sampler2D textures[2];
+//uniform sampler2D diffuseTex;
+//uniform sampler2D bumpTex;
+uniform sampler2D allTextures0; 
+uniform sampler2D allTextures1;
+
 
 in Vertex{
     vec4 colour;
@@ -19,9 +21,9 @@ void main(void){
     mat3 TBN = mat3(normalize(IN.tangent),
                     normalize(IN.binormal),
                     normalize(IN.normal));
-    vec3 normal = texture2D(textures[1], IN.texCoord).rgb*2.0 - 1.0;
+    vec3 normal = texture2D(allTextures1, IN.texCoord).rgb*2.0 - 1.0;
     normal = normalize(TBN * normalize(normal));
-
-    fragColour[0] = texture2D(textures[0], IN.texCoord);
+    
+    fragColour[0] = texture2D(allTextures1, IN.texCoord);
     fragColour[1] = vec4(normal.xyz * 0.5 + 0.5, 1.0);
 }

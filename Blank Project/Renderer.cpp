@@ -15,6 +15,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	heightMap = new HeightMap(TEXTUREDIR"Coursework/Heightmap.png");
 	root = new SceneNode();
 	SceneNode* hmNode = new SceneNode(heightMap);
+	root->AddChild(hmNode);
 
 	//Initialise Textures
 	earthTex = SOIL_load_OGL_texture(
@@ -70,10 +71,8 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	hmNode->AddTexture(earthTex);
 	hmNode->AddTexture(earthBump);
 	hmNode->SetShader(sceneShader);
-	hmNode->GetShader()->AddUniform("diffuseTex", new UniformValue(0));
-	hmNode->GetShader()->AddUniform("bumpTex", new UniformValue(1));
-
-	nodeList.emplace_back(hmNode);
+	hmNode->GetShader()->AddUniform("allTextures0", new UniformValue((int)earthTex));
+	hmNode->GetShader()->AddUniform("allTextures1", new UniformValue((int)earthBump));
 
 	glGenFramebuffers(1, &bufferFBO);
 	glGenFramebuffers(1, &pointLightFBO);
@@ -151,6 +150,7 @@ void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
 }
 
 void Renderer::UpdateScene(float dt) {
+	frameFrustum.FromMatrix(projMatrix * viewMatrix);
 	if (freeCam) {
 		camera->UpdateCamera(dt);
 	}
@@ -183,6 +183,11 @@ void Renderer::BuildNodeLists(SceneNode* from) {
 	}
 }
 
+void Renderer::ClearNodeLists() {
+	transparentNodeList.clear();
+	nodeList.clear();
+}
+
 void Renderer::SortNodeLists() {
 	std::sort(transparentNodeList.rbegin(), transparentNodeList.rend(), SceneNode::CompareByCameraDistance);
 	std::sort(nodeList.begin(), nodeList.end(), SceneNode::CompareByCameraDistance);
@@ -202,14 +207,12 @@ void Renderer::DrawNodes() {
 
 void Renderer::DrawNode(SceneNode* n) {
 	if (n->GetMesh() && n->GetShader()) {
-		Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
+		//Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 		Shader* nodeShader = n->GetShader();
-		//UpdateShaderMatrices();
-		nodeShader->ChangeUniform("modelMatrix", modelMatrix);
-		nodeShader->ChangeUniform("projMatrix", projMatrix);
-		nodeShader->ChangeUniform("viewMatrix", viewMatrix);
+		BindShader(nodeShader);
 		nodeShader->SetUniforms();
 		n->SetShaderTextures();
+		UpdateShaderMatrices();
 		n->Draw(*this);
 	}
 }
@@ -226,13 +229,14 @@ void Renderer::RenderScene() {
 	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
 		(float)width / (float)height, 45.0f);
 	UpdateShaderMatrices();
-
+	BuildNodeLists(root);
 	DrawSkybox();
 	//FillBuffers();
 	DrawNodes();
 	DrawGrass();
 	DrawPointLights();
 	CombineBuffers();
+	ClearNodeLists();
 }
 
 void Renderer::DrawSkybox() {

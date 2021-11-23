@@ -34,10 +34,6 @@ Shader::Shader(const string& vertex, const string& fragment, const string& geome
 	Reload(false);
 	allShaders.emplace_back(this);
 
-	AddUniform("modelMatrix", new UniformValue(Matrix4()));
-	AddUniform("projMatrix", new UniformValue(Matrix4()));
-	AddUniform("viewMatrix", new UniformValue(Matrix4()));
-
 	GLint i;
 	GLint count;
 	GLint size;
@@ -48,7 +44,7 @@ Shader::Shader(const string& vertex, const string& fragment, const string& geome
 
 
 	glGetProgramiv(GetProgram(), GL_ACTIVE_UNIFORMS, &count);
-	for (int i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 	{
 		glGetActiveUniform(GetProgram(), (GLuint)i, maxNameLength, &nameLength, &size, &type, name);
 		switch (type) {
@@ -72,6 +68,9 @@ Shader::Shader(const string& vertex, const string& fragment, const string& geome
 			break;
 		case GL_FLOAT_MAT4:
 			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMMAT4});
+			break;
+		case GL_SAMPLER_2D:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMSAMPLER2D});
 			break;
 		default:
 			break;
@@ -271,6 +270,9 @@ void Shader::ChangeUniform(std::string s, UniformValue v) {
 		break;
 	case UniformType::UNIFORMMAT4:
 		customUniforms[s]->mat4 = v.mat4;
+		break;
+	case UniformType::UNIFORMSAMPLER2D:
+		customUniforms[s]->i = v.i;
 		break;
 	default:
 		break;
