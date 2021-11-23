@@ -7,7 +7,6 @@ SceneNode::SceneNode(Mesh* mesh, Vector4 colour) {
 	modelScale = Vector3(1, 1, 1);
 	boundingRadius = 1.0f;
 	distanceFromCamera = 0.0f;
-	texture = 0;
 }
 
 SceneNode::~SceneNode(void) {
@@ -24,6 +23,12 @@ void SceneNode::AddChild(SceneNode* s) {
 void SceneNode::Draw(const OGLRenderer& r) {
 	if (mesh && shader) {
 		mesh->Draw(); 
+	}
+}
+
+void SceneNode::SetShaderTextures() {
+	for (int i = 0; i < textures.size(); i++) {
+		glUniform1fv(glGetUniformLocation(shader->GetProgram(), "textures"), 10,textures);
 	}
 }
 

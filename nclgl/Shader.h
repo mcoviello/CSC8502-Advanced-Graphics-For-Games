@@ -65,7 +65,7 @@ public:
 	}
 
 	void		SetUniforms();
-	void		AddUniform(std::string s, UniformValue* v) { uniforms.insert(std::pair<std::string, UniformValue*>(s,v)); }
+	void		AddUniform(std::string s, union UniformValue* v) { uniforms.insert(std::pair<std::string, union UniformValue*>(s,v)); }
 
 	static void ReloadAllShaders();
 	static void	PrintCompileLog(GLuint object);
@@ -87,6 +87,6 @@ protected:
 	std::string  shaderFiles[SHADER_MAX];
 
 	static std::vector<Shader*> allShaders;
-	std::map<std::string, UniformValue*> uniforms;
+	std::map<std::string, union UniformValue*> uniforms;
 };
 

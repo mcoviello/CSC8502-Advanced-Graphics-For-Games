@@ -33,7 +33,10 @@ Shader::Shader(const string& vertex, const string& fragment, const string& geome
 
 	Reload(false);
 	allShaders.emplace_back(this);
-	uniforms = std::map<std::string, UniformValue*>();
+
+	AddUniform("modelMatrix", new UniformValue(Matrix4()));
+	AddUniform("projMatrix", new UniformValue(Matrix4()));
+	AddUniform("viewMatrix", new UniformValue(Matrix4()));
 }
 
 Shader::~Shader(void)	{
@@ -193,16 +196,24 @@ void Shader::SetUniforms() {
 			break;
 		case GL_FLOAT:
 			glUniform1f(glGetUniformLocation(GetProgram(), name), uniforms[name]->f);
+			break;
 		case GL_FLOAT_VEC2:
 			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec2));
+			break;
 		case GL_FLOAT_VEC3:
 			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec3));
+			break;
 		case GL_FLOAT_VEC4:
 			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec4));
+			break;
 		case GL_FLOAT_MAT3:
 			glUniformMatrix3fv(glGetUniformLocation(GetProgram(), name), 1, false, uniforms[name]->mat3.values);
+			break;
 		case GL_FLOAT_MAT4:
 			glUniformMatrix4fv(glGetUniformLocation(GetProgram(), name), 1, false, uniforms[name]->mat4.values);
+			break;
+		default:
+			break;
 		}
 	}
 }

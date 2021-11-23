@@ -37,8 +37,9 @@ public:
 	float GetCameraDistance() const { return distanceFromCamera; }
 	void SetCameraDistance(float f) { distanceFromCamera = f; }
 
-	GLuint GetTexture() const { return texture; }
-	void SetTexture(GLuint tex) { texture = tex; }
+	std::vector<GLint> GetTextures() const { return textures; }
+	void AddTexture(GLuint tex) { textures.emplace_back(tex); }
+	void SetShaderTextures();
 
 	static bool CompareByCameraDistance(SceneNode* a, SceneNode* b) {
 		return (a->distanceFromCamera < b->distanceFromCamera) ? true : false;
@@ -65,7 +66,7 @@ protected:
 	Vector3						modelScale;
 	Vector4						colour;
 	std::vector<SceneNode*>		children;
-	GLuint						texture;
+	std::vector<GLint>			textures;
 
 	float distanceFromCamera;
 	float boundingRadius;

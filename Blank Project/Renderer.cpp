@@ -39,9 +39,6 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	SetTextureRepeating(earthBump, true);
 	SetTextureRepeating(grassMap, true);
 
-	hmNode->SetTexture(earthTex);
-	hmNode->AddUniformToShader("diffuseTex",new UniformValue(0));
-	hmNode->AddUniformToShader("bumpTex", new UniformValue(1));
 
 	Vector3 heightMapSize = heightMap->GetHeightmapSize();
 
@@ -68,6 +65,14 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess())
 		return;
+
+
+	hmNode->AddTexture(earthTex);
+	hmNode->AddTexture(earthBump);
+	hmNode->SetShader(sceneShader);
+	hmNode->GetShader()->AddUniform("diffuseTex", new UniformValue(0));
+	hmNode->GetShader()->AddUniform("bumpTex", new UniformValue(1));
+	nodeList.emplace_back(hmNode);
 
 	glGenFramebuffers(1, &bufferFBO);
 	glGenFramebuffers(1, &pointLightFBO);
@@ -199,9 +204,8 @@ void Renderer::DrawNode(SceneNode* n) {
 		Shader* nodeShader = n->GetShader();
 		nodeShader->SetUniforms();
 
-		GLuint texture = n->GetTexture();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE0, texture);
+		std::vector<GLint> texture = n->GetTextures();
+		n->SetShaderTextures();
 
 		n->Draw(*this);
 	}
@@ -221,8 +225,8 @@ void Renderer::RenderScene() {
 	UpdateShaderMatrices();
 
 	DrawSkybox();
-	FillBuffers();
-	//DrawNodes();
+	//FillBuffers();
+	DrawNodes();
 	DrawGrass();
 	DrawPointLights();
 	CombineBuffers();
