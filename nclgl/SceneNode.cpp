@@ -28,7 +28,9 @@ void SceneNode::Draw(const OGLRenderer& r) {
 
 void SceneNode::SetShaderTextures() {
 	for (int i = 0; i < textures.size(); i++) {
-		glUniform1fv(glGetUniformLocation(shader->GetProgram(), "textures"), 10,textures);
+		glUniform1i(glGetUniformLocation(shader->GetProgram(), ("textures[" + std::to_string(i) + "]").c_str()),i);
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
 	}
 }
 

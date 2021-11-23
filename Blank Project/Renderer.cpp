@@ -72,6 +72,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	hmNode->SetShader(sceneShader);
 	hmNode->GetShader()->AddUniform("diffuseTex", new UniformValue(0));
 	hmNode->GetShader()->AddUniform("bumpTex", new UniformValue(1));
+
 	nodeList.emplace_back(hmNode);
 
 	glGenFramebuffers(1, &bufferFBO);
@@ -190,6 +191,7 @@ void Renderer::SortNodeLists() {
 
 void Renderer::DrawNodes() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	for (const auto& i : nodeList) {
 		DrawNode(i);
 	}
@@ -202,11 +204,12 @@ void Renderer::DrawNode(SceneNode* n) {
 	if (n->GetMesh() && n->GetShader()) {
 		Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 		Shader* nodeShader = n->GetShader();
+		//UpdateShaderMatrices();
+		nodeShader->ChangeUniform("modelMatrix", modelMatrix);
+		nodeShader->ChangeUniform("projMatrix", projMatrix);
+		nodeShader->ChangeUniform("viewMatrix", viewMatrix);
 		nodeShader->SetUniforms();
-
-		std::vector<GLint> texture = n->GetTextures();
 		n->SetShaderTextures();
-
 		n->Draw(*this);
 	}
 }

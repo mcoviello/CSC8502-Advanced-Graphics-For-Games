@@ -40,6 +40,17 @@ union UniformValue
 	UniformValue(Vector4 v4) { vec4 = v4; }
 	UniformValue(Matrix3 m3) { mat3 = m3; }
 	UniformValue(Matrix4 m4) { mat4 = m4; }
+	~UniformValue() {};
+};
+
+enum UniformType {
+	UNIFORMINT,
+	UNIFORMFLOAT,
+	UNIFORMVEC2,
+	UNIFORMVEC3,
+	UNIFORMVEC4,
+	UNIFORMMAT3,
+	UNIFORMMAT4
 };
 
 enum ShaderStage {
@@ -65,7 +76,8 @@ public:
 	}
 
 	void		SetUniforms();
-	void		AddUniform(std::string s, union UniformValue* v) { uniforms.insert(std::pair<std::string, union UniformValue*>(s,v)); }
+	void		AddUniform(std::string s, union UniformValue* v) { customUniforms.insert(std::pair<std::string, union UniformValue*>(s,v)); }
+	void		ChangeUniform(std::string, UniformValue);
 
 	static void ReloadAllShaders();
 	static void	PrintCompileLog(GLuint object);
@@ -87,6 +99,7 @@ protected:
 	std::string  shaderFiles[SHADER_MAX];
 
 	static std::vector<Shader*> allShaders;
-	std::map<std::string, union UniformValue*> uniforms;
+	std::map<std::string, UniformValue*> customUniforms;
+	std::map<std::string, UniformType> shaderUniforms;
 };
 

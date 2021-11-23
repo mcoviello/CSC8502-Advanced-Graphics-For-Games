@@ -37,6 +37,46 @@ Shader::Shader(const string& vertex, const string& fragment, const string& geome
 	AddUniform("modelMatrix", new UniformValue(Matrix4()));
 	AddUniform("projMatrix", new UniformValue(Matrix4()));
 	AddUniform("viewMatrix", new UniformValue(Matrix4()));
+
+	GLint i;
+	GLint count;
+	GLint size;
+	GLenum type;
+	const GLsizei maxNameLength = 16; // maximum name length
+	GLchar name[maxNameLength]; // variable name in GLSL
+	GLsizei nameLength; // name length
+
+
+	glGetProgramiv(GetProgram(), GL_ACTIVE_UNIFORMS, &count);
+	for (int i = 0; i < count; i++)
+	{
+		glGetActiveUniform(GetProgram(), (GLuint)i, maxNameLength, &nameLength, &size, &type, name);
+		switch (type) {
+		case GL_INT:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMINT});
+			break;
+		case GL_FLOAT:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMFLOAT});
+			break;
+		case GL_FLOAT_VEC2:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMVEC2});
+			break;
+		case GL_FLOAT_VEC3:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMVEC3});
+			break;
+		case GL_FLOAT_VEC4:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMVEC4});
+			break;
+		case GL_FLOAT_MAT3:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMMAT3});
+			break;
+		case GL_FLOAT_MAT4:
+			shaderUniforms.insert(std::pair<std::string, UniformType>{name, UniformType::UNIFORMMAT4});
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 Shader::~Shader(void)	{
@@ -177,43 +217,63 @@ void Shader::ReloadAllShaders() {
 }
 
 void Shader::SetUniforms() {
-	GLint i;
-	GLint count;
-	GLint size;
-	GLenum type;
-	const GLsizei maxNameLength = 16; // maximum name length
-	GLchar name[maxNameLength]; // variable name in GLSL
-	GLsizei nameLength; // name length
-
-
-	glGetProgramiv(GetProgram(), GL_ACTIVE_UNIFORMS, &count);
-	for (int i = 0; i < count; i++)
+	for (auto const& x : customUniforms)
 	{
-		glGetActiveUniform(GetProgram(), (GLuint)i, maxNameLength, &nameLength, &size, &type, name);
-		switch (type) {
-		case GL_INT:
-			glUniform1i(glGetUniformLocation(GetProgram(), name), uniforms[name]->i);
+		UniformType t = shaderUniforms[x.first];
+		switch (t) {
+		case UniformType::UNIFORMINT:
+			glUniform1i(glGetUniformLocation(GetProgram(), x.first.c_str()), x.second->i);
 			break;
-		case GL_FLOAT:
-			glUniform1f(glGetUniformLocation(GetProgram(), name), uniforms[name]->f);
+		case UniformType::UNIFORMFLOAT:
+			glUniform1f(glGetUniformLocation(GetProgram(), x.first.c_str()), x.second->f);
 			break;
-		case GL_FLOAT_VEC2:
-			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec2));
+		case UniformType::UNIFORMVEC2:
+			glUniform2fv(glGetUniformLocation(GetProgram(), x.first.c_str()), 1, (float*)& x.second->vec2);
 			break;
-		case GL_FLOAT_VEC3:
-			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec3));
+		case UniformType::UNIFORMVEC3:
+			glUniform2fv(glGetUniformLocation(GetProgram(), x.first.c_str()), 1, (float*)& x.second->vec3);
 			break;
-		case GL_FLOAT_VEC4:
-			glUniform2fv(glGetUniformLocation(GetProgram(), name), 1, (float*)&(uniforms[name]->vec4));
+		case UniformType::UNIFORMVEC4:
+			glUniform2fv(glGetUniformLocation(GetProgram(), x.first.c_str()), 1, (float*)& x.second->vec4);
 			break;
-		case GL_FLOAT_MAT3:
-			glUniformMatrix3fv(glGetUniformLocation(GetProgram(), name), 1, false, uniforms[name]->mat3.values);
+		case UniformType::UNIFORMMAT3:
+			glUniformMatrix3fv(glGetUniformLocation(GetProgram(), x.first.c_str()), 1, false, x.second->mat3.values);
 			break;
-		case GL_FLOAT_MAT4:
-			glUniformMatrix4fv(glGetUniformLocation(GetProgram(), name), 1, false, uniforms[name]->mat4.values);
+		case UniformType::UNIFORMMAT4:
+			glUniformMatrix4fv(glGetUniformLocation(GetProgram(), x.first.c_str()), 1, false, x.second->mat4.values);
 			break;
 		default:
 			break;
 		}
 	}
+}
+
+void Shader::ChangeUniform(std::string s, UniformValue v) {
+	UniformType t = shaderUniforms[s];
+	switch (t) {
+	case UniformType::UNIFORMINT:
+		customUniforms[s]->i = v.i;
+		break;
+	case UniformType::UNIFORMFLOAT:
+		customUniforms[s]->f = v.f;
+		break;
+	case UniformType::UNIFORMVEC2:
+		customUniforms[s]->vec2 = v.vec2;
+		break;
+	case UniformType::UNIFORMVEC3:
+		customUniforms[s]->vec3 = v.vec3;
+		break;
+	case UniformType::UNIFORMVEC4:
+		customUniforms[s]->vec4 = v.vec4;
+		break;
+	case UniformType::UNIFORMMAT3:
+		customUniforms[s]->mat3 = v.mat3;
+		break;
+	case UniformType::UNIFORMMAT4:
+		customUniforms[s]->mat4 = v.mat4;
+		break;
+	default:
+		break;
+	}
+
 }
