@@ -30,7 +30,7 @@ void  main() {
 
     vec4 tipColour = vec4(0.15, 1, 0.45, 1);
     vec4 baseColour = vec4(0.3, 1, 0.6, 1);
-    if(IN[0].grassMapHeight > 0.0){
+    if(IN[0].grassMapHeight > 0.2){
         OUT.normal      = IN[0].normal;
         OUT.tangent      = IN[0].tangent;
         OUT.binormal      = IN[0].binormal;

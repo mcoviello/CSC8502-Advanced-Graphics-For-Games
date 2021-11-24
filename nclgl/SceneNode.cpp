@@ -28,11 +28,11 @@ void SceneNode::Draw(const OGLRenderer& r) {
 
 void SceneNode::SetShaderTextures() {
 	for (int i = 0; i < textures.size(); i++) {
-		std::string name = "allTextures" + std::to_string((i));
+		std::string name = "tex" + std::to_string((i));
 		glUniform1i(glGetUniformLocation(shader->GetProgram(), name.c_str()), i);
 
 		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
 	}
 }
 

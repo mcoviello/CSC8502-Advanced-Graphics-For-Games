@@ -11,13 +11,13 @@ out vec4 fragColour;
 
 void main(void){
     vec4 diffuse = texture(diffuseTex, IN.texCoord).rgba;
-    if(diffuse.a == -1){
-        fragColour.rgb = diffuse.xyz;
-        fragColour.a = 1;
-    } else {
     vec3 light = texture(diffuseLight, IN.texCoord).xyz;
     vec3 specular = texture(specularLight, IN.texCoord).xyz;
 
+    if(diffuse.a > 0.5){
+        fragColour.rgb = diffuse.rgb;
+        fragColour.a = 1;
+    } else {
     fragColour.rgb = diffuse.xyz * 0.1; //ambient
     fragColour.rgb += diffuse.xyz * light;
     fragColour.rgb += specular;

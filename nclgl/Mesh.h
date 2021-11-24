@@ -55,6 +55,8 @@ public:
 	void Draw();
 	void DrawSubMesh(int i);
 
+	void SetPrimitive(GLint type) { this->type = type; }
+
 	void GenerateNormals();
 	bool GetVertexIndicesForTri(unsigned int triangleIndex, unsigned int& a,
 		unsigned int& b, unsigned int& c) const;

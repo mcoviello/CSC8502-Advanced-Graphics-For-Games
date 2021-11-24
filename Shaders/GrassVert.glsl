@@ -1,6 +1,6 @@
 #version 330 core
 uniform mat4 modelMatrix;
-uniform sampler2D grassMap;
+uniform sampler2D tex0; //grass map
 uniform int mapScale;
 
 in vec3 position;
@@ -16,7 +16,7 @@ out Vertex{
 } OUT;
 
 void main(void){
-    OUT.grassMapHeight = texture2D(grassMap, texCoord / mapScale).r;
+    OUT.grassMapHeight = texture2D(tex0, texCoord / mapScale).r;
 
     OUT.normal = normal;
     OUT.tangent = tangent.xyz;

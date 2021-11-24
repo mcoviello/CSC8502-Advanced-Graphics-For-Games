@@ -1,6 +1,5 @@
 #version 400 core
 layout(vertices = 3) out; //num vertices in output patch
-uniform int tessAmount;
 
 in Vertex {
     vec3 normal;
@@ -18,10 +17,10 @@ out Vertex {
 
 void main() {
 
-    gl_TessLevelInner [0] = tessAmount;
-    gl_TessLevelOuter [0] = tessAmount;
-    gl_TessLevelOuter [1] = tessAmount;
-    gl_TessLevelOuter [2] = tessAmount;
+    gl_TessLevelInner [0] = 2;
+    gl_TessLevelOuter [0] = 2;
+    gl_TessLevelOuter [1] = 2;
+    gl_TessLevelOuter [2] = 2;
 
     OUT[gl_InvocationID].normal = IN[gl_InvocationID].normal;
     OUT[gl_InvocationID].tangent = IN[gl_InvocationID].tangent;

@@ -18,7 +18,7 @@ class Renderer : public OGLRenderer
 public:
 	Renderer(Window& parent);
 	~Renderer(void);
-
+	void BuildNodeTree();
 	void RenderScene() override;
 	void UpdateScene(float dt) override;
 	void ToggleFreecam();
@@ -30,10 +30,8 @@ protected:
 	void DrawNode(SceneNode* n);
 
 	void DrawSkybox();
-	void FillBuffers();
 	void DrawPointLights();
 	void CombineBuffers();
-	void DrawGrass();
 
 	void GenerateScreenTexture(GLuint& into, bool depth = false);
 
@@ -44,6 +42,7 @@ protected:
 	Shader* combineShader;
 	Shader* grassShader;
 	Shader* skyboxShader;
+	Shader* waterShader;
 
 	GLuint bufferFBO;
 	GLuint bufferColourTex;

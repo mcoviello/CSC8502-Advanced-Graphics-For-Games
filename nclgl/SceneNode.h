@@ -19,6 +19,12 @@ public:
 	Vector4 GetColour()						const	{ return colour; }
 	void SetColour(Vector4 c)						{ colour = c; }
 
+	GLint GetPrimitiveType()						const { return primitiveType; }
+	void SetPrimitiveType(GLint t)					{ primitiveType = t; }
+
+	bool GetCullFaces()								const { return cullFaces; }
+	void SetCullFaces(bool c)						{ cullFaces = c; }
+
 	Vector3 GetModelScale()					const	{ return modelScale; }
 	void SetModelScale(Vector3 s)					{ modelScale = s; }
 
@@ -67,6 +73,8 @@ protected:
 	Vector4						colour;
 	std::vector<SceneNode*>		children;
 	std::vector<GLint>			textures;
+	GLint						primitiveType = GL_TRIANGLES;
+	bool						cullFaces = true;
 
 	float distanceFromCamera;
 	float boundingRadius;

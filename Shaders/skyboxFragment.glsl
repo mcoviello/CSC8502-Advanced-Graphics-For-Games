@@ -8,5 +8,6 @@ out vec4 fragColour;
 
 void main(void){
     fragColour = texture(cubeTex, normalize(IN.viewDir));
-    fragColour.a = -1;
+    //Alpha acts as a flag, to seperate as background from the rest of the terrain
+    fragColour.a = 1;
 }

@@ -14,8 +14,6 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	quad = Mesh::GenerateQuad();
 	heightMap = new HeightMap(TEXTUREDIR"Coursework/Heightmap.png");
 	root = new SceneNode();
-	SceneNode* hmNode = new SceneNode(heightMap);
-	root->AddChild(hmNode);
 
 	//Initialise Textures
 	earthTex = SOIL_load_OGL_texture(
@@ -31,9 +29,9 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
 	cubeMap = SOIL_load_OGL_cubemap(
-		TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg",
-		TEXTUREDIR"rusted_up.jpg", TEXTUREDIR"rusted_down.jpg",
-		TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg",
+		TEXTUREDIR"/Coursework/cubemap_left.jpg", TEXTUREDIR"/Coursework/cubemap_right.jpg",
+		TEXTUREDIR"/Coursework/cubemap_up.jpg", TEXTUREDIR"/Coursework/cubemap_down.jpg",
+		TEXTUREDIR"/Coursework/cubemap_forward.jpg", TEXTUREDIR"/Coursework/cubemap_back.jpg",
 		SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
 	SetTextureRepeating(earthTex, true);
@@ -63,16 +61,13 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	combineShader = new Shader("combineVert.glsl", "combineFrag.glsl");
 	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl", "GrassTessControl.glsl", "GrassTessEval.glsl");
 	skyboxShader = new Shader("skyboxVertex.glsl", "skyboxFragment.glsl");
+	waterShader = new Shader("waterVertex.glsl", "waterFragment.glsl");
 
-	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess())
+	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess() ||
+		!grassShader->LoadSuccess() || !skyboxShader->LoadSuccess() || !waterShader->LoadSuccess())
 		return;
 
-
-	hmNode->AddTexture(earthTex);
-	hmNode->AddTexture(earthBump);
-	hmNode->SetShader(sceneShader);
-	hmNode->GetShader()->AddUniform("allTextures0", new UniformValue((int)earthTex));
-	hmNode->GetShader()->AddUniform("allTextures1", new UniformValue((int)earthBump));
+	BuildNodeTree();
 
 	glGenFramebuffers(1, &bufferFBO);
 	glGenFramebuffers(1, &pointLightFBO);
@@ -133,6 +128,23 @@ Renderer ::~Renderer(void) {
 	glDeleteFramebuffers(1, &pointLightFBO);
 }
 
+void Renderer::BuildNodeTree() {
+	SceneNode* hm = new SceneNode(heightMap);
+	hm->AddTexture(earthTex);
+	hm->AddTexture(earthBump);
+	hm->SetShader(sceneShader);
+	root->AddChild(hm);
+
+	SceneNode* grass = new SceneNode(heightMap);
+	grass->AddTexture(grassMap);
+	grass->SetShader(grassShader);
+	grass->SetPrimitiveType(GL_PATCHES);
+	grass->SetCullFaces(false);
+	grass->AddUniformToShader("time", new UniformValue((float)0.0f));
+	grass->AddUniformToShader("mapScale", new UniformValue(32));
+	hm->AddChild(grass);
+}
+
 void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
 	glGenTextures(1, &into);
 	glBindTexture(GL_TEXTURE_2D, into);
@@ -150,6 +162,7 @@ void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
 }
 
 void Renderer::UpdateScene(float dt) {
+	grassShader->ChangeUniform("time", UniformValue{ (float)time->GetTotalTimeMSec() });
 	frameFrustum.FromMatrix(projMatrix * viewMatrix);
 	if (freeCam) {
 		camera->UpdateCamera(dt);
@@ -196,7 +209,6 @@ void Renderer::SortNodeLists() {
 
 void Renderer::DrawNodes() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	for (const auto& i : nodeList) {
 		DrawNode(i);
 	}
@@ -207,12 +219,16 @@ void Renderer::DrawNodes() {
 
 void Renderer::DrawNode(SceneNode* n) {
 	if (n->GetMesh() && n->GetShader()) {
-		//Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
+		Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 		Shader* nodeShader = n->GetShader();
 		BindShader(nodeShader);
 		nodeShader->SetUniforms();
 		n->SetShaderTextures();
 		UpdateShaderMatrices();
+		//Set the primitive type to draw
+		n->GetMesh()->SetPrimitive(n->GetPrimitiveType());
+		//Set the cull faces value
+		n->GetCullFaces() ? glEnable(GL_CULL_FACE) : glDisable(GL_CULL_FACE);
 		n->Draw(*this);
 	}
 }
@@ -228,12 +244,9 @@ void Renderer::RenderScene() {
 	viewMatrix = camera->BuildViewMatrix();
 	projMatrix = Matrix4::Perspective(1.0f, 10000.0f,
 		(float)width / (float)height, 45.0f);
-	UpdateShaderMatrices();
 	BuildNodeLists(root);
 	DrawSkybox();
-	//FillBuffers();
 	DrawNodes();
-	DrawGrass();
 	DrawPointLights();
 	CombineBuffers();
 	ClearNodeLists();
@@ -249,24 +262,6 @@ void Renderer::DrawSkybox() {
 
 	quad->Draw();
 	glDepthMask(GL_TRUE);
-}
-
-void Renderer::FillBuffers() {
-	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
-
-	BindShader(sceneShader);
-	glUniform1i(glGetUniformLocation(sceneShader->GetProgram(), "diffuseTex"), 0);
-	glUniform1i(glGetUniformLocation(sceneShader->GetProgram(), "bumpTex"), 1);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, earthTex);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, earthBump);
-
-	UpdateShaderMatrices();
-
-	heightMap->Draw();
 }
 
 void Renderer::DrawPointLights() {
@@ -333,26 +328,4 @@ void Renderer::CombineBuffers() {
 
 	quad->Draw();
 	glDisable(GL_BLEND);
-}
-
-void Renderer::DrawGrass() {
-	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
-	glDisable(GL_CULL_FACE);
-	BindShader(grassShader);
-	UpdateShaderMatrices();
-
-	glUniform1i(glGetUniformLocation(grassShader->GetProgram(), "grassMap"), 0);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, grassMap);
-
-	glUniform1f(glGetUniformLocation(grassShader->GetProgram(), "time"),time->GetTotalTimeMSec());
-
-	glUniform1i(glGetUniformLocation(grassShader->GetProgram(), "tessAmount"), 2);
-
-	glUniform1i(glGetUniformLocation(grassShader->GetProgram(), "mapScale"), 32);
-
-	glPatchParameteri(GL_PATCH_VERTICES, 3);
-	heightMap->DrawType(GL_PATCHES);
-	glEnable(GL_CULL_FACE);
 }
