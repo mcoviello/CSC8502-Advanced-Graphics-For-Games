@@ -23,6 +23,7 @@ public:
 	void RenderScene() override;
 	void UpdateScene(float dt) override;
 	void ToggleFreecam();
+	void ToggleCelShading();
 protected:
 	void BuildNodeLists(SceneNode* from);
 	void SortNodeLists();
@@ -41,6 +42,7 @@ protected:
 	Shader* sceneShader;
 	Shader* pointLightShader;
 	Shader* combineShader;
+	Shader* celShadeCombineShader;
 	Shader* grassShader;
 	Shader* skyboxShader;
 	Shader* waterShader;
@@ -87,6 +89,7 @@ protected:
 	GameTimer* time;
 
 	bool freeCam = true;
+	bool celShading = false;
 	std::vector<CameraTrackPos> cameraTrack;
 	int curCamTrackPos;
 

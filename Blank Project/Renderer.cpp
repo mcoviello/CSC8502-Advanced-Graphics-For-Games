@@ -127,6 +127,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	sceneShader = new Shader("BumpVertex.glsl", "bufferFragment.glsl");
 	pointLightShader = new Shader("pointlightvert.glsl", "pointlightfrag.glsl");
 	combineShader = new Shader("combineVert.glsl", "combineFrag.glsl");
+	celShadeCombineShader = new Shader("combineVert.glsl", "celShadeCombineFrag.glsl");
 	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl", "GrassTessControl.glsl", "GrassTessEval.glsl");
 	skyboxShader = new Shader("skyboxVertex.glsl", "skyboxFragment.glsl");
 	waterShader = new Shader("waterVertex.glsl", "waterFragment.glsl");
@@ -415,9 +416,13 @@ void Renderer::DrawPointLights() {
 	glClearColor(0.2f, 0.2f, 0.2f, 1);
 }
 
+void Renderer::ToggleCelShading() {
+	celShading = !celShading;
+}
+
 void Renderer::CombineBuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	BindShader(combineShader);
+	BindShader(celShading ? celShadeCombineShader : combineShader);
 	modelMatrix.ToIdentity();
 	viewMatrix.ToIdentity();
 	projMatrix.ToIdentity();

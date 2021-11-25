@@ -25,6 +25,8 @@ int main()	{
 			Shader::ReloadAllShaders();
 		if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_C))
 			renderer.ToggleFreecam();
+		if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_F))
+			renderer.ToggleCelShading();
 
 	}
 	return 0;
