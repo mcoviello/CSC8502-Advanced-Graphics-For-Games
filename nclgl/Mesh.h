@@ -123,7 +123,7 @@ protected:
 
 	std::vector<std::string>	jointNames;
 	std::vector<int>			jointParents;
-	std::vector< SubMesh>		meshLayers;
+	std::vector<SubMesh>		meshLayers;
 	std::vector<std::string>	layerNames;
 };
 

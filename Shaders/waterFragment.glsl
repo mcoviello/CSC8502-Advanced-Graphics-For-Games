@@ -33,5 +33,5 @@ void main (void) {
     
     fragColour[0] = vec4(0,0.8 ,0.7 ,1) + vec4(0.3,0.2,0.3,0) * clampedHeight;
     fragColour[0].a = 0.5;
-    fragColour[1] = vec4((normal.rgb * 0.5 + 0.5), 0.2);
+    fragColour[1] = vec4((normal.rgb * 0.5), 0.2) ;
 }

@@ -61,9 +61,11 @@ protected:
 	Mesh* quad;
 	Mesh* invQuad;
 	Mesh* palmTree;
+	Mesh* fire;
 	Camera* camera;
 
 	MeshMaterial* palmTreeMat;
+	MeshMaterial* fireMat;
 
 	GLuint cubeMap;
 	GLuint sandTex;
@@ -76,9 +78,11 @@ protected:
 	GLuint grassMap;
 	GLuint islandHeightMap;
 	GLuint treeMap;
+	GLuint textureMap;
 	GLuint treeTex;
 
 	std::vector<GLuint> treeTextures;
+	std::vector<GLuint> fireTextures;
 
 	GameTimer* time;
 

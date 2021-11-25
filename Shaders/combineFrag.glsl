@@ -16,7 +16,7 @@ void main(void){
 
     if(diffuse.a > 0.9){
         fragColour.rgb = diffuse.rgb;
-        fragColour.a = 1;
+        fragColour.a = diffuse.a;
     } else {
     fragColour.rgb = diffuse.rgb * 0.1; //ambient
     fragColour.rgb += diffuse.rgb * light;

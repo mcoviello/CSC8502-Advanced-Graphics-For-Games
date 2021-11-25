@@ -6,7 +6,7 @@
 #include "../nclgl/Frustum.h"
 #include "../nclgl/MeshMaterial.h"
 #include <chrono>
-const int LIGHT_NUM = 1;
+const int LIGHT_NUM = 2;
 const int MAX_HEIGHT = 500;
 const int NO_OF_TREES = 10;
 
@@ -17,8 +17,31 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	invQuad = Mesh::GenerateInvertedQuad();
 	heightMap = new HeightMap(TEXTUREDIR"Coursework/Heightmap.png");
 	root = new SceneNode();
-	palmTree = Mesh::LoadFromMeshFile("palmtree.msh");
-	palmTreeMat = new MeshMaterial("palmtree.mat");
+	palmTree = Mesh::LoadFromMeshFile("MY_PALM.msh");
+	palmTreeMat = new MeshMaterial("MY_PALM.mat");
+	fire = Mesh::LoadFromMeshFile("campfire.msh");
+	fireMat = new MeshMaterial("campfire.mat");
+
+	
+	for (int i = 0; i < palmTree->GetSubMeshCount(); ++i) {
+		const MeshMaterialEntry* matEntry = palmTreeMat->GetMaterialForLayer(i);
+		const string* filename = nullptr;
+		matEntry->GetEntry("Diffuse", &filename);
+		string path = TEXTUREDIR + *filename;
+		GLuint texID = SOIL_load_OGL_texture(path.c_str(), SOIL_LOAD_AUTO,
+			SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y);
+		treeTextures.emplace_back(texID);
+	}
+
+	for (int i = 0; i < fire->GetSubMeshCount(); ++i) {
+		const MeshMaterialEntry* matEntry = fireMat->GetMaterialForLayer(i);
+		const string* filename = nullptr;
+		matEntry->GetEntry("Diffuse", &filename);
+		string path = TEXTUREDIR + *filename;
+		GLuint texID = SOIL_load_OGL_texture(path.c_str(), SOIL_LOAD_AUTO,
+			SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y);
+		fireTextures.emplace_back(texID);
+	}
 
 	//Initialise Textures
 	sandTex = SOIL_load_OGL_texture(
@@ -53,6 +76,10 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		TEXTUREDIR"Coursework/GrassMap.png", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
+	textureMap = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/Texturemap.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
 	islandHeightMap = SOIL_load_OGL_texture(
 		TEXTUREDIR"Coursework/Heightmap.png", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
@@ -63,8 +90,14 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		TEXTUREDIR"/Coursework/cubemap_forward.jpg", TEXTUREDIR"/Coursework/cubemap_back.jpg",
 		SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
 	SetTextureRepeating(sandTex, true);
 	SetTextureRepeating(sandBump, true);
+	SetTextureRepeating(grassTex, true);
+	SetTextureRepeating(grassBump, true);
+	SetTextureRepeating(rockTex, true);
+	SetTextureRepeating(rockBump, true);
 	SetTextureRepeating(waterBump, true);
 	SetTextureRepeating(grassMap, true);
 
@@ -82,9 +115,14 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	pointLights = new Light[LIGHT_NUM];
 
 	Light& l = pointLights[0];
-	l.SetPosition(Vector3(4000, 2000.0f, heightMapSize.z / 2));
+	l.SetPosition(Vector3(heightMapSize.x / 2, 3000.0f, heightMapSize.z / 2));
 	l.SetColour(Vector4(0.95f, 0.9f, 0.85f, 1));
-	l.SetRadius(5000.0f);
+	l.SetRadius(7000.0f);
+	
+	pointLights[1] = Light();
+	pointLights[1].SetPosition(Vector3(2750, 550, 2050));
+	pointLights[1].SetColour(Vector4(1.0f, 0.1f, 0.1f, 1));
+	pointLights[1].SetRadius(400.0f);
 
 	sceneShader = new Shader("BumpVertex.glsl", "bufferFragment.glsl");
 	pointLightShader = new Shader("pointlightvert.glsl", "pointlightfrag.glsl");
@@ -165,6 +203,11 @@ void Renderer::BuildNodeTree() {
 	hm->SetShader(sceneShader);
 	hm->AddTexture(sandTex);
 	hm->AddTexture(sandBump);
+	hm->AddTexture(rockTex);
+	hm->AddTexture(rockBump);
+	hm->AddTexture(grassTex);
+	hm->AddTexture(grassBump);
+	hm->AddTexture(textureMap);
 	root->AddChild(hm);
 
 	SceneNode* grass = new SceneNode(heightMap);
@@ -187,15 +230,24 @@ void Renderer::BuildNodeTree() {
 	water->AddTexture(islandHeightMap);
 	hm->AddChild(water);
 
+	SceneNode* fireNode = new SceneNode(fire);
+	fireNode->SetShader(texturedShader);
+	fireNode->SetMatTexture(fireTextures);
+	fireNode->SetTransform(Matrix4::Translation(Vector3(2700, 510, 2000)));
+	fireNode->SetModelScale(Vector3(1, 1, 1) * 1000);
+	hm->AddChild(fireNode);
+
 	SceneNode* forest = new SceneNode();
 	hm->AddChild(forest);
 	for (int i = 0; i < NO_OF_TREES; i++) {
 		SceneNode* tree = new SceneNode(palmTree);
 		tree->SetShader(texturedShader);
 		//tree->SetModelScale(Vector3(10, 10, 10));
-		tree->SetTransform(Matrix4::Translation(Vector3(i*1000, 0, i*1000)));
+		tree->SetTransform(Matrix4::Translation(Vector3(i*1000, 0, i*1000)) * Matrix4::Scale(Vector3(1, 1, 1) * 100));
+		tree->SetMatTexture(treeTextures);
 		forest->AddChild(tree);
 	}
+
 }
 
 void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
@@ -274,14 +326,14 @@ void Renderer::DrawNodes() {
 }
 
 void Renderer::DrawNode(SceneNode* n) {
-	if (n->GetMesh() && n->GetShader()) {
+	if (n->GetMesh() != nullptr && n->GetShader()) {
 		Matrix4 model = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 		Shader* nodeShader = n->GetShader();
 		BindShader(nodeShader);
 		nodeShader->SetUniforms();
-		n->SetShaderTextures();
 		UpdateShaderMatrices();
 		glUniformMatrix4fv(glGetUniformLocation(nodeShader->GetProgram(),"modelMatrix"), 1, false, model.values);
+		n->SetShaderTextures();
 		//Set the primitive type to draw
 		n->GetMesh()->SetPrimitive(n->GetPrimitiveType());
 		//Set the cull faces value
@@ -322,6 +374,7 @@ void Renderer::DrawSkybox() {
 }
 
 void Renderer::DrawPointLights() {
+	glEnable(GL_BLEND);
 	glBindFramebuffer(GL_FRAMEBUFFER, pointLightFBO);
 	BindShader(pointLightShader);
 
@@ -363,7 +416,6 @@ void Renderer::DrawPointLights() {
 }
 
 void Renderer::CombineBuffers() {
-	glEnable(GL_BLEND);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	BindShader(combineShader);
 	modelMatrix.ToIdentity();

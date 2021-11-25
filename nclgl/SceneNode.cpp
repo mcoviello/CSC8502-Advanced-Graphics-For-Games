@@ -1,4 +1,5 @@
 #include "SceneNode.h"
+#include "../nclgl/MeshMaterial.h"
 
 SceneNode::SceneNode(Mesh* mesh, Vector4 colour) {
 	this->mesh = mesh;
@@ -29,15 +30,25 @@ void SceneNode::Draw(const OGLRenderer& r) {
 
 void SceneNode::SetShaderTextures() {
 	if (mesh && shader) {
-		for (int i = 0; i < textures.size(); i++) {
-			std::string name = "tex" + std::to_string((i));
-			glUniform1i(glGetUniformLocation(shader->GetProgram(), name.c_str()), i);
+		if (matTextures.size() > 0) {
+			for (int i = 0; i < mesh->GetSubMeshCount(); ++i) {
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, matTextures[i]);
+				//mesh->DrawSubMesh(i);
+			}
+		}
+		else {
+			for (int i = 0; i < textures.size(); i++) {
+				std::string name = "tex" + std::to_string((i));
+				glUniform1i(glGetUniformLocation(shader->GetProgram(), name.c_str()), i);
 
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, textures[i]);
+				glActiveTexture(GL_TEXTURE0 + i);
+				glBindTexture(GL_TEXTURE_2D, textures[i]);
+			}
 		}
 	}
 }
+
 
 void SceneNode::Update(float dt) {
 	if (parent) {

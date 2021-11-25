@@ -47,6 +47,7 @@ public:
 	void AddTexture(GLuint tex) { textures.emplace_back(tex); }
 	void AddMatTexture(GLuint tex) { matTextures.emplace_back(tex); }
 	void SetMatTexture(std::vector<GLuint> t) { matTextures = t; }
+	void BuildMatForMesh();
 	void SetShaderTextures();
 
 	static bool CompareByCameraDistance(SceneNode* a, SceneNode* b) {

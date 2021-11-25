@@ -32,8 +32,8 @@ float invLerp(float a, float b, float value){
 
 void  main() {
 
-    vec4 tipColour = vec4(0.15, 1, 0.45, 1);
-    vec4 baseColour = vec4(0.3, 1, 0.6, 1);
+    vec4 tipColour = vec4(0.3, 1, 0.6, 1);
+    vec4 baseColour = vec4(0.15, 1, 0.45, 1);
 
     float steepness = dot(IN[0].normal, vec3(0,1,0));
     steepness = invLerp(0.7, 0.9, steepness);

@@ -2,7 +2,7 @@
 #include "Window.h"
 #include <algorithm>
 
-const float MOVE_SPEED = 200.0f;
+const float MOVE_SPEED = 400.0f;
 
 void Camera::UpdateCamera(float dt) {
 	pitch -= (Window::GetMouse()->GetRelativePosition().y);

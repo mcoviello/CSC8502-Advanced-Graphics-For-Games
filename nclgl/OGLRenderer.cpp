@@ -1,4 +1,5 @@
 /*
+/*
 Class:OGLRenderer
 Author:Rich Davison	 <richard-gordon.davison@newcastle.ac.uk>
 Description:Abstract base class for the graphics tutorials. Creates an OpenGL 

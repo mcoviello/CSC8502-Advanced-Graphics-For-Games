@@ -17,6 +17,7 @@ int main()	{
 	w.ShowOSPointer(false);
 
 	while(w.UpdateWindow()  && !Window::GetKeyboard()->KeyDown(KEYBOARD_ESCAPE)){
+		w.SetTitle(std::to_string(1 / w.GetTimer()->GetTimeDeltaSeconds()));
 		renderer.UpdateScene(w.GetTimer()->GetTimeDeltaSeconds());
 		renderer.RenderScene();
 		renderer.SwapBuffers();
