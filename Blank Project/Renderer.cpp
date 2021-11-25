@@ -4,28 +4,57 @@
 #include "../nclgl/Light.h"
 #include "../nclgl/SceneNode.h"
 #include "../nclgl/Frustum.h"
+#include "../nclgl/MeshMaterial.h"
 #include <chrono>
 const int LIGHT_NUM = 1;
 const int MAX_HEIGHT = 500;
+const int NO_OF_TREES = 10;
 
 Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	time = new GameTimer();
 	sphere = Mesh::LoadFromMeshFile("Sphere.msh");
 	quad = Mesh::GenerateQuad();
+	invQuad = Mesh::GenerateInvertedQuad();
 	heightMap = new HeightMap(TEXTUREDIR"Coursework/Heightmap.png");
 	root = new SceneNode();
+	palmTree = Mesh::LoadFromMeshFile("palmtree.msh");
+	palmTreeMat = new MeshMaterial("palmtree.mat");
 
 	//Initialise Textures
-	earthTex = SOIL_load_OGL_texture(
-		TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO,
+	sandTex = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/sand.png", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
-	earthBump = SOIL_load_OGL_texture(
-		TEXTUREDIR"Barren RedsDOT3.JPG", SOIL_LOAD_AUTO,
+	sandBump = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/sandnormal.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
+	rockTex = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/cliff.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
+	rockBump = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/cliffnormal.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
+	grassTex = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/grass.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
+	grassBump = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/grassnormal.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
+	waterBump = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/waternormal.png", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
 	grassMap = SOIL_load_OGL_texture(
 		TEXTUREDIR"Coursework/GrassMap.png", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+
+	islandHeightMap = SOIL_load_OGL_texture(
+		TEXTUREDIR"Coursework/Heightmap.png", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
 
 	cubeMap = SOIL_load_OGL_cubemap(
@@ -34,8 +63,9 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		TEXTUREDIR"/Coursework/cubemap_forward.jpg", TEXTUREDIR"/Coursework/cubemap_back.jpg",
 		SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
-	SetTextureRepeating(earthTex, true);
-	SetTextureRepeating(earthBump, true);
+	SetTextureRepeating(sandTex, true);
+	SetTextureRepeating(sandBump, true);
+	SetTextureRepeating(waterBump, true);
 	SetTextureRepeating(grassMap, true);
 
 
@@ -62,6 +92,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	grassShader = new Shader("GrassVert.glsl", "GrassFrag.glsl", "GrassGeom.glsl", "GrassTessControl.glsl", "GrassTessEval.glsl");
 	skyboxShader = new Shader("skyboxVertex.glsl", "skyboxFragment.glsl");
 	waterShader = new Shader("waterVertex.glsl", "waterFragment.glsl");
+	texturedShader = new Shader("TexturedVertex.glsl", "texturedFragment.glsl");
 
 	if (!sceneShader->LoadSuccess() || !pointLightShader->LoadSuccess() || !combineShader->LoadSuccess() ||
 		!grassShader->LoadSuccess() || !skyboxShader->LoadSuccess() || !waterShader->LoadSuccess())
@@ -129,10 +160,11 @@ Renderer ::~Renderer(void) {
 }
 
 void Renderer::BuildNodeTree() {
+	Vector3 hmSize = heightMap->GetHeightmapSize();
 	SceneNode* hm = new SceneNode(heightMap);
-	hm->AddTexture(earthTex);
-	hm->AddTexture(earthBump);
 	hm->SetShader(sceneShader);
+	hm->AddTexture(sandTex);
+	hm->AddTexture(sandBump);
 	root->AddChild(hm);
 
 	SceneNode* grass = new SceneNode(heightMap);
@@ -143,6 +175,27 @@ void Renderer::BuildNodeTree() {
 	grass->AddUniformToShader("time", new UniformValue((float)0.0f));
 	grass->AddUniformToShader("mapScale", new UniformValue(32));
 	hm->AddChild(grass);
+
+	SceneNode* water = new SceneNode(invQuad);
+	water->SetShader(waterShader);
+	water->SetModelScale(Vector3(hmSize.x/2, hmSize.z/2,1));
+	water->SetPrimitiveType(GL_TRIANGLE_STRIP);
+	water->SetTransform(Matrix4::Translation(Vector3(hmSize.x / 2, 250, hmSize.z / 2)) * Matrix4::Rotation(90, Vector3(1, 0, 0)) * Matrix4::Rotation(180, Vector3(0, 0, 1)));
+	water->AddUniformToShader("cameraPos", new UniformValue(camera->GetPosition()));
+	water->AddUniformToShader("time", new UniformValue((float)0.0f));
+	water->AddTexture(waterBump);
+	water->AddTexture(islandHeightMap);
+	hm->AddChild(water);
+
+	SceneNode* forest = new SceneNode();
+	hm->AddChild(forest);
+	for (int i = 0; i < NO_OF_TREES; i++) {
+		SceneNode* tree = new SceneNode(palmTree);
+		tree->SetShader(texturedShader);
+		//tree->SetModelScale(Vector3(10, 10, 10));
+		tree->SetTransform(Matrix4::Translation(Vector3(i*1000, 0, i*1000)));
+		forest->AddChild(tree);
+	}
 }
 
 void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
@@ -163,7 +216,10 @@ void Renderer::GenerateScreenTexture(GLuint& into, bool depth) {
 
 void Renderer::UpdateScene(float dt) {
 	grassShader->ChangeUniform("time", UniformValue{ (float)time->GetTotalTimeMSec() });
+	waterShader->ChangeUniform("time", UniformValue{ (float)time->GetTotalTimeMSec() });
+	waterShader->ChangeUniform("cameraPos", UniformValue{ camera->GetPosition() });
 	frameFrustum.FromMatrix(projMatrix * viewMatrix);
+	root->Update(dt);
 	if (freeCam) {
 		camera->UpdateCamera(dt);
 	}
@@ -225,6 +281,7 @@ void Renderer::DrawNode(SceneNode* n) {
 		nodeShader->SetUniforms();
 		n->SetShaderTextures();
 		UpdateShaderMatrices();
+		glUniformMatrix4fv(glGetUniformLocation(nodeShader->GetProgram(),"modelMatrix"), 1, false, model.values);
 		//Set the primitive type to draw
 		n->GetMesh()->SetPrimitive(n->GetPrimitiveType());
 		//Set the cull faces value

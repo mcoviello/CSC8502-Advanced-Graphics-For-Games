@@ -43,6 +43,7 @@ class Mesh	{
 public:	
 	static Mesh* GenerateTriangle();
 	static Mesh* GenerateQuad();
+	static Mesh* GenerateInvertedQuad();
 
 	struct SubMesh {
 		int start;

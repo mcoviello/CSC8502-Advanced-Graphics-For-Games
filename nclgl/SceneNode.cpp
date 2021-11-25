@@ -3,6 +3,7 @@
 SceneNode::SceneNode(Mesh* mesh, Vector4 colour) {
 	this->mesh = mesh;
 	this->colour = colour;
+	shader = nullptr;
 	parent = NULL;
 	modelScale = Vector3(1, 1, 1);
 	boundingRadius = 5000.0f;
@@ -27,12 +28,14 @@ void SceneNode::Draw(const OGLRenderer& r) {
 }
 
 void SceneNode::SetShaderTextures() {
-	for (int i = 0; i < textures.size(); i++) {
-		std::string name = "tex" + std::to_string((i));
-		glUniform1i(glGetUniformLocation(shader->GetProgram(), name.c_str()), i);
+	if (mesh && shader) {
+		for (int i = 0; i < textures.size(); i++) {
+			std::string name = "tex" + std::to_string((i));
+			glUniform1i(glGetUniformLocation(shader->GetProgram(), name.c_str()), i);
 
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, textures[i]);
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, textures[i]);
+		}
 	}
 }
 

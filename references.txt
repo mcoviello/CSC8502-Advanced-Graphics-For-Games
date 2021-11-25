@@ -1,1 +1,2 @@
 cubeMap: https://www.cleanpng.com/png-skybox-texture-mapping-cube-mapping-sky-cloud-920475/download-png.html
+sand: https://3dtextures.me/2020/06/25/stylized-sand-001/

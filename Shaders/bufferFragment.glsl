@@ -19,10 +19,10 @@ void main(void){
     mat3 TBN = mat3(normalize(IN.tangent),
                     normalize(IN.binormal),
                     normalize(IN.normal));
-    vec3 normal = texture2D(tex1, IN.texCoord).rgb*2.0 - 1.0;
+    vec3 normal = texture2D(tex1, IN.texCoord/3).rgb*2.0 - 1.0;
     normal = normalize(TBN * normalize(normal));
     
-    fragColour[0] = texture2D(tex0, IN.texCoord);
+    fragColour[0] = texture2D(tex0, IN.texCoord/3);
     fragColour[0].a = 0;
     fragColour[1] = vec4(normal.xyz * 0.5 + 0.5, 1.0);
 }

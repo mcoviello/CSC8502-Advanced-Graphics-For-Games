@@ -6,6 +6,7 @@ class Camera;
 class Mesh;
 class HeightMap;
 class SceneNode;
+class MeshMaterial;
 
 struct CameraTrackPos {
 	Vector3 position;
@@ -43,6 +44,7 @@ protected:
 	Shader* grassShader;
 	Shader* skyboxShader;
 	Shader* waterShader;
+	Shader* texturedShader;
 
 	GLuint bufferFBO;
 	GLuint bufferColourTex;
@@ -57,12 +59,26 @@ protected:
 	Light* pointLights;
 	Mesh* sphere;
 	Mesh* quad;
+	Mesh* invQuad;
+	Mesh* palmTree;
 	Camera* camera;
 
+	MeshMaterial* palmTreeMat;
+
 	GLuint cubeMap;
-	GLuint earthTex;
-	GLuint earthBump;
+	GLuint sandTex;
+	GLuint sandBump;
+	GLuint rockTex;
+	GLuint rockBump;
+	GLuint grassTex;
+	GLuint grassBump;
+	GLuint waterBump;
 	GLuint grassMap;
+	GLuint islandHeightMap;
+	GLuint treeMap;
+	GLuint treeTex;
+
+	std::vector<GLuint> treeTextures;
 
 	GameTimer* time;
 

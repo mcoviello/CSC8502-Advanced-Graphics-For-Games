@@ -26,10 +26,19 @@ float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+float invLerp(float a, float b, float value){
+    return (value - a) / (b - a);
+}
+
 void  main() {
 
     vec4 tipColour = vec4(0.15, 1, 0.45, 1);
     vec4 baseColour = vec4(0.3, 1, 0.6, 1);
+
+    float steepness = dot(IN[0].normal, vec3(0,1,0));
+    steepness = invLerp(0.7, 0.9, steepness);
+    steepness = clamp(steepness, 0, 1 );
+
     if(IN[0].grassMapHeight > 0.2){
         OUT.normal      = IN[0].normal;
         OUT.tangent      = IN[0].tangent;
@@ -38,6 +47,7 @@ void  main() {
         //Get random blade height
         float height = 50 + (((rand(gl_in[0].gl_Position.xz))) * 100);
         height *= IN[0].grassMapHeight;
+        height *= steepness;
 
         //Calculate a 'random' rotation for the grass based off its xz world position.
         //Create the grass geometry along this rotation axis

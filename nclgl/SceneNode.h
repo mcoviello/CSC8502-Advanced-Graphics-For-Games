@@ -43,8 +43,10 @@ public:
 	float GetCameraDistance() const { return distanceFromCamera; }
 	void SetCameraDistance(float f) { distanceFromCamera = f; }
 
-	std::vector<GLint> GetTextures() const { return textures; }
+	std::vector<GLuint> GetTextures() const { return textures; }
 	void AddTexture(GLuint tex) { textures.emplace_back(tex); }
+	void AddMatTexture(GLuint tex) { matTextures.emplace_back(tex); }
+	void SetMatTexture(std::vector<GLuint> t) { matTextures = t; }
 	void SetShaderTextures();
 
 	static bool CompareByCameraDistance(SceneNode* a, SceneNode* b) {
@@ -72,7 +74,8 @@ protected:
 	Vector3						modelScale;
 	Vector4						colour;
 	std::vector<SceneNode*>		children;
-	std::vector<GLint>			textures;
+	std::vector<GLuint>			textures;
+	std::vector<GLuint>			matTextures;
 	GLint						primitiveType = GL_TRIANGLES;
 	bool						cullFaces = true;
 
